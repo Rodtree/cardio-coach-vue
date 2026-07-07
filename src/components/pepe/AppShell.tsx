@@ -127,6 +127,8 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
       <footer className="border-t border-border py-4 text-center text-xs text-muted-foreground">
         PEPE · Maniquí robótico ESP32 · Tecnicatura en Automatización y Robótica
       </footer>
+      <DebugPanel />
     </div>
+
   );
 }
