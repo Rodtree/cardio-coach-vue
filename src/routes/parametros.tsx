@@ -1,13 +1,24 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Save, RotateCcw } from "lucide-react";
+import { Save, RotateCcw, Bug, FileText } from "lucide-react";
 import { AppShell } from "@/components/pepe/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { InformeView, MOCK_INFORME } from "@/components/pepe/InformeView";
 import { usePepe } from "@/lib/pepe-store";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/parametros")({
   head: () => ({
@@ -21,7 +32,7 @@ export const Route = createFileRoute("/parametros")({
 });
 
 function ParamsPage() {
-  const { params, setParams, isDocente } = usePepe();
+  const { params, setParams, isDocente, debugMode, setDebugMode } = usePepe();
   const navigate = useNavigate();
   const [form, setForm] = useState(params);
 
@@ -120,7 +131,7 @@ function ParamsPage() {
         </div>
       </div>
 
-      <div className="mt-6 flex gap-2">
+      <div className="mt-6 flex flex-wrap gap-2">
         <Button onClick={save} size="lg">
           <Save className="mr-2 size-4" /> Guardar
         </Button>
@@ -128,9 +139,71 @@ function ParamsPage() {
           <RotateCcw className="mr-2 size-4" /> Restablecer
         </Button>
       </div>
+
+      <section className="mt-8 rounded-xl border border-border bg-card p-4 shadow-sm">
+        <h2 className="mb-3 text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+          Herramientas para docentes
+        </h2>
+        <div className="flex items-center justify-between gap-4 rounded-lg border border-border bg-background p-3">
+          <div className="flex items-start gap-3">
+            <span className="grid size-9 place-items-center rounded-md bg-accent text-accent-foreground">
+              <Bug className="size-4" />
+            </span>
+            <div>
+              <p className="font-medium">Modo Debug</p>
+              <p className="text-xs text-muted-foreground">
+                Habilita simulación sin hardware y una consola flotante con
+                eventos en vivo.
+              </p>
+            </div>
+          </div>
+          <Switch
+            checked={debugMode}
+            onCheckedChange={(v) => {
+              setDebugMode(v);
+              toast.info(v ? "Modo debug activado" : "Modo debug desactivado");
+            }}
+            aria-label="Activar modo debug"
+          />
+        </div>
+
+        <div className="mt-3 flex items-center justify-between gap-4 rounded-lg border border-border bg-background p-3">
+          <div className="flex items-start gap-3">
+            <span className="grid size-9 place-items-center rounded-md bg-accent text-accent-foreground">
+              <FileText className="size-4" />
+            </span>
+            <div>
+              <p className="font-medium">Vista previa del informe</p>
+              <p className="text-xs text-muted-foreground">
+                Revisá diseño y contenido con datos de ejemplo, sin ejecutar
+                una sesión real.
+              </p>
+            </div>
+          </div>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button variant="outline" size="sm">
+                Ver ejemplo
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Vista previa — Informe de sesión</DialogTitle>
+                <DialogDescription>
+                  Datos de ejemplo. No corresponden a una práctica real.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="mt-4">
+                <InformeView data={MOCK_INFORME} />
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
+      </section>
     </AppShell>
   );
 }
+
 
 function Field({
   label,

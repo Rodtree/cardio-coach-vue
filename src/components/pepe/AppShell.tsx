@@ -1,8 +1,27 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Activity, BatteryFull, BatteryLow, BatteryMedium, WifiOff, Wifi, Loader2 } from "lucide-react";
+import { Activity, BatteryFull, BatteryLow, BatteryMedium, WifiOff, Wifi, Loader2, Moon, Sun } from "lucide-react";
 import { usePepe } from "@/lib/pepe-store";
+import { useTheme } from "@/lib/theme";
+import { Button } from "@/components/ui/button";
+import { DebugPanel } from "@/components/pepe/DebugPanel";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
+
+function ThemeToggle() {
+  const { theme, toggle } = useTheme();
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      onClick={toggle}
+      aria-label={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
+      className="size-8"
+    >
+      {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
+    </Button>
+  );
+}
+
 
 function StatusPill() {
   const { state } = usePepe();
@@ -74,7 +93,9 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
           <div className="flex items-center gap-2">
             <BatteryPill />
             <StatusPill />
+            <ThemeToggle />
           </div>
+
         </div>
         <nav className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-2 pb-2 text-sm">
           {NAV.map((n) => {
@@ -106,6 +127,8 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
       <footer className="border-t border-border py-4 text-center text-xs text-muted-foreground">
         PEPE · Maniquí robótico ESP32 · Tecnicatura en Automatización y Robótica
       </footer>
+      <DebugPanel />
     </div>
+
   );
 }
