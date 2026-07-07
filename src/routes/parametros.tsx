@@ -32,7 +32,7 @@ export const Route = createFileRoute("/parametros")({
 });
 
 function ParamsPage() {
-  const { params, setParams, isDocente } = usePepe();
+  const { params, setParams, isDocente, debugMode, setDebugMode } = usePepe();
   const navigate = useNavigate();
   const [form, setForm] = useState(params);
 
