@@ -141,9 +141,12 @@ function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   return (
     <QueryClientProvider client={queryClient}>
-      <PepeProvider>
-        <Outlet />
-      </PepeProvider>
+      <ThemeProvider>
+        <PepeProvider>
+          <Outlet />
+        </PepeProvider>
+      </ThemeProvider>
     </QueryClientProvider>
   );
+
 }
