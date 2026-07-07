@@ -93,7 +93,9 @@ export function AppShell({ children, title }: { children: ReactNode; title?: str
           <div className="flex items-center gap-2">
             <BatteryPill />
             <StatusPill />
+            <ThemeToggle />
           </div>
+
         </div>
         <nav className="mx-auto flex max-w-5xl gap-1 overflow-x-auto px-2 pb-2 text-sm">
           {NAV.map((n) => {
