@@ -75,14 +75,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "PEPE — Panel de práctica RCP" },
+      { title: "PEPE — Inicio" },
       {
         name: "description",
         content:
           "Panel web para el maniquí robótico PEPE (ESP32) de práctica de RCP — Instituto Superior Politécnico Misiones N°1.",
       },
       { name: "author", content: "ISPM N°1 — Tecnicatura en Automatización y Robótica" },
-      { property: "og:title", content: "PEPE — Panel de práctica RCP" },
+      { property: "og:title", content: "PEPE — Inicio" },
       {
         property: "og:description",
         content:
@@ -90,6 +90,12 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
+      { name: "twitter:title", content: "PEPE — Inicio" },
+      { name: "description", content: "Elegí tu rol para acceder al panel del maniquí robótico PEPE de práctica RCP." },
+      { property: "og:description", content: "Elegí tu rol para acceder al panel del maniquí robótico PEPE de práctica RCP." },
+      { name: "twitter:description", content: "Elegí tu rol para acceder al panel del maniquí robótico PEPE de práctica RCP." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/fac144ad-52d9-4729-9767-3b3f9de7eb2c/id-preview-1d4ad216--58046504-acf1-4de9-9ea6-cd669a5a9bfe.lovable.app-1783436780207.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/fac144ad-52d9-4729-9767-3b3f9de7eb2c/id-preview-1d4ad216--58046504-acf1-4de9-9ea6-cd669a5a9bfe.lovable.app-1783436780207.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
