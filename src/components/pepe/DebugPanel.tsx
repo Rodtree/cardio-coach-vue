@@ -116,35 +116,34 @@ export function DebugPanel() {
             <Trash2 className="mr-1 size-3.5" /> Limpiar
           </Button>
         </div>
-        <ScrollArea className="flex-1 border-t border-border">
-          <div
-            ref={scrollRef as never}
-            className="p-3 font-mono text-[11px] leading-relaxed space-y-0.5"
-          >
-            {logs.length === 0 && (
-              <p className="text-muted-foreground italic">Sin eventos aún…</p>
-            )}
-            {logs.map((l, i) => (
-              <div key={i} className="flex gap-2">
-                <span className="text-muted-foreground shrink-0">
-                  {new Date(l.ts).toLocaleTimeString("es-AR", { hour12: false })}
-                </span>
-                <span
-                  className={cn(
-                    "shrink-0 uppercase w-10",
-                    l.level === "error" && "text-destructive",
-                    l.level === "warn" && "text-warning-foreground",
-                    l.level === "event" && "text-primary",
-                    l.level === "info" && "text-muted-foreground",
-                  )}
-                >
-                  {l.level}
-                </span>
-                <span className="break-all">{l.msg}</span>
-              </div>
-            ))}
-          </div>
-        </ScrollArea>
+        <div
+          ref={scrollRef}
+          className="flex-1 overflow-y-auto border-t border-border p-3 font-mono text-[11px] leading-relaxed space-y-0.5"
+        >
+          {logs.length === 0 && (
+            <p className="text-muted-foreground italic">Sin eventos aún…</p>
+          )}
+          {logs.map((l, i) => (
+            <div key={i} className="flex gap-2">
+              <span className="text-muted-foreground shrink-0">
+                {new Date(l.ts).toLocaleTimeString("es-AR", { hour12: false })}
+              </span>
+              <span
+                className={cn(
+                  "shrink-0 uppercase w-10",
+                  l.level === "error" && "text-destructive",
+                  l.level === "warn" && "text-warning-foreground",
+                  l.level === "event" && "text-primary",
+                  l.level === "info" && "text-muted-foreground",
+                )}
+              >
+                {l.level}
+              </span>
+              <span className="break-all">{l.msg}</span>
+            </div>
+          ))}
+        </div>
+
       </SheetContent>
     </Sheet>
   );
