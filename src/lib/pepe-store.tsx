@@ -1,5 +1,6 @@
 import {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useMemo,
@@ -37,15 +38,16 @@ export interface DatosIniciales {
 }
 
 export interface Params {
-  duracionPrueba: number; // segundos
-  objetivoProfundidadMin: number; // cm
-  objetivoProfundidadMax: number; // cm
+  duracionPrueba: number;
+  objetivoProfundidadMin: number;
+  objetivoProfundidadMax: number;
   objetivoCompresionesPorMin: number;
   wsUrl: string;
 }
 
 const PARAM_KEY = "pepe.params";
 const AUTH_KEY = "pepe.docenteAuth";
+const DEBUG_KEY = "pepe.debug";
 export const DOCENTE_PASSWORD = "pepe2026";
 
 const DEFAULT_PARAMS: Params = {
@@ -57,7 +59,7 @@ const DEFAULT_PARAMS: Params = {
 };
 
 export interface CompresionPoint {
-  t: number; // ms desde inicio
+  t: number;
   cm: number;
 }
 
@@ -77,6 +79,12 @@ export interface PepeState {
   sesionActiva: boolean;
 }
 
+export interface LogEntry {
+  ts: number;
+  level: "info" | "warn" | "error" | "event";
+  msg: string;
+}
+
 interface PepeContextValue {
   state: PepeState;
   params: Params;
@@ -89,6 +97,14 @@ interface PepeContextValue {
   isDocente: boolean;
   loginDocente: (pw: string) => boolean;
   logoutDocente: () => void;
+  // Debug
+  debugMode: boolean;
+  setDebugMode: (v: boolean) => void;
+  logs: LogEntry[];
+  clearLogs: () => void;
+  simulating: boolean;
+  startSimulation: (estudiante?: string, duracion?: number) => void;
+  stopSimulation: () => void;
 }
 
 const PepeContext = createContext<PepeContextValue | null>(null);
@@ -124,14 +140,35 @@ export function PepeProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<PepeState>(initialState);
   const [params, setParamsState] = useState<Params>(DEFAULT_PARAMS);
   const [isDocente, setIsDocente] = useState(false);
+  const [debugMode, setDebugModeState] = useState(false);
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [simulating, setSimulating] = useState(false);
   const wsRef = useRef<WebSocket | null>(null);
   const startTsRef = useRef<number>(Date.now());
   const reconnectRef = useRef<number | null>(null);
+  const simRef = useRef<{
+    tickComp?: number;
+    tickVent?: number;
+    endTimer?: number;
+    ventCount: number;
+    ventDurations: number[];
+    ventVolumes: number[];
+    ventGaps: number[];
+    lastVentAt: number;
+    press30Window: number[];
+  } | null>(null);
 
-  // Hydrate from localStorage on client
+  const log = useCallback((level: LogEntry["level"], msg: string) => {
+    setLogs((prev) => {
+      const next = [...prev, { ts: Date.now(), level, msg }];
+      return next.length > 200 ? next.slice(-200) : next;
+    });
+  }, []);
+
   useEffect(() => {
     setParamsState(loadParams());
     setIsDocente(localStorage.getItem(AUTH_KEY) === "1");
+    setDebugModeState(localStorage.getItem(DEBUG_KEY) === "1");
   }, []);
 
   const setParams = (p: Params) => {
@@ -140,6 +177,16 @@ export function PepeProvider({ children }: { children: ReactNode }) {
       localStorage.setItem(PARAM_KEY, JSON.stringify(p));
     } catch {}
   };
+
+  const setDebugMode = (v: boolean) => {
+    setDebugModeState(v);
+    try {
+      localStorage.setItem(DEBUG_KEY, v ? "1" : "0");
+    } catch {}
+    log("info", v ? "Modo debug activado" : "Modo debug desactivado");
+  };
+
+  const clearLogs = () => setLogs([]);
 
   const loginDocente = (pw: string) => {
     if (pw === DOCENTE_PASSWORD) {
@@ -158,27 +205,122 @@ export function PepeProvider({ children }: { children: ReactNode }) {
     } catch {}
   };
 
+  const handleMessage = useCallback(
+    (msg: { type?: string; [k: string]: unknown }) => {
+      if (!msg || !msg.type) return;
+      switch (msg.type) {
+        case "datosMediciones": {
+          const cm = Number(msg.cmPresion) || 0;
+          const t = Date.now() - startTsRef.current;
+          setState((s) => {
+            const next = [...s.compresiones, { t, cm }].slice(-120);
+            return {
+              ...s,
+              ultimaCompresion: cm,
+              compresiones: next,
+              totalCompresiones: s.totalCompresiones + 1,
+            };
+          });
+          break;
+        }
+        case "presiones": {
+          setState((s) => ({ ...s, cuentaPress30s: Number(msg.cuentaPress) || 0 }));
+          break;
+        }
+        case "ventilacion": {
+          const v: Ventilacion = {
+            cm3ventilados: Number(msg.cm3ventilados) || 0,
+            duracionVentilacion: Number(msg.duracionVentilacion) || 0,
+          };
+          setState((s) => ({
+            ...s,
+            ultimaVentilacion: v,
+            totalVentilacionesLocal: s.totalVentilacionesLocal + 1,
+          }));
+          break;
+        }
+        case "estadisticasVentilacion": {
+          const stats: EstadisticasVentilacion = {
+            totalVentilaciones: Number(msg.totalVentilaciones) || 0,
+            tiempoPromedioEntreVentilaciones:
+              Number(msg.tiempoPromedioEntreVentilaciones) || 0,
+            duracionPromedioVentilaciones:
+              Number(msg.duracionPromedioVentilaciones) || 0,
+            airePromedioVentilado: Number(msg.airePromedioVentilado) || 0,
+          };
+          setState((s) => ({
+            ...s,
+            estadisticasFinales: stats,
+            sesionActiva: false,
+          }));
+          break;
+        }
+        case "datosIniciales": {
+          setState((s) => ({
+            ...s,
+            estudiante: String(msg.estudiante ?? ""),
+            duracionPrueba: Number(msg.duracionPrueba) || s.duracionPrueba,
+            lecturaMaximaCMPresion:
+              Number(msg.lecturaMaximaCMPresion) || s.lecturaMaximaCMPresion,
+          }));
+          break;
+        }
+        case "iniciaGrafica": {
+          startTsRef.current = Date.now();
+          setState((s) => ({
+            ...s,
+            compresiones: [],
+            totalCompresiones: 0,
+            cuentaPress30s: 0,
+            totalVentilacionesLocal: 0,
+            estadisticasFinales: null,
+            sesionActiva: true,
+            lecturaMaximaCMPresion:
+              Number(msg.lecturaMaximaCMPresion) || s.lecturaMaximaCMPresion,
+          }));
+          break;
+        }
+        case "cargaBateria": {
+          setState((s) => ({
+            ...s,
+            bateria: Number(msg.porcentajeCargaBatt) || 0,
+          }));
+          break;
+        }
+      }
+      log("event", `← ${msg.type}`);
+    },
+    [log],
+  );
+
   const connect = (url?: string) => {
+    if (simulating) {
+      log("warn", "Simulación activa: se ignora conexión real");
+      return;
+    }
     const target = url ?? params.wsUrl;
     if (wsRef.current && wsRef.current.readyState <= 1) {
       wsRef.current.close();
     }
     setState((s) => ({ ...s, status: "connecting" }));
+    log("info", `Conectando a ${target}`);
     try {
       const ws = new WebSocket(target);
       wsRef.current = ws;
 
       ws.onopen = () => {
         setState((s) => ({ ...s, status: "connected" }));
+        log("info", "WebSocket conectado");
       };
       ws.onclose = () => {
         setState((s) => ({ ...s, status: "disconnected" }));
-        // simple auto-retry
+        log("warn", "WebSocket cerrado");
         if (reconnectRef.current) window.clearTimeout(reconnectRef.current);
         reconnectRef.current = window.setTimeout(() => connect(target), 4000);
       };
       ws.onerror = () => {
         setState((s) => ({ ...s, status: "error" }));
+        log("error", "Error de WebSocket");
       };
       ws.onmessage = (ev) => {
         let msg: { type?: string; [k: string]: unknown };
@@ -189,8 +331,9 @@ export function PepeProvider({ children }: { children: ReactNode }) {
         }
         handleMessage(msg);
       };
-    } catch {
+    } catch (e) {
       setState((s) => ({ ...s, status: "error" }));
+      log("error", `No se pudo abrir WS: ${(e as Error).message}`);
     }
   };
 
@@ -204,94 +347,11 @@ export function PepeProvider({ children }: { children: ReactNode }) {
     setState((s) => ({ ...s, status: "disconnected" }));
   };
 
-  const handleMessage = (msg: { type?: string; [k: string]: unknown }) => {
-    if (!msg || !msg.type) return;
-    switch (msg.type) {
-      case "datosMediciones": {
-        const cm = Number(msg.cmPresion) || 0;
-        const t = Date.now() - startTsRef.current;
-        setState((s) => {
-          const next = [...s.compresiones, { t, cm }].slice(-120);
-          return {
-            ...s,
-            ultimaCompresion: cm,
-            compresiones: next,
-            totalCompresiones: s.totalCompresiones + 1,
-          };
-        });
-        break;
-      }
-      case "presiones": {
-        setState((s) => ({ ...s, cuentaPress30s: Number(msg.cuentaPress) || 0 }));
-        break;
-      }
-      case "ventilacion": {
-        const v: Ventilacion = {
-          cm3ventilados: Number(msg.cm3ventilados) || 0,
-          duracionVentilacion: Number(msg.duracionVentilacion) || 0,
-        };
-        setState((s) => ({
-          ...s,
-          ultimaVentilacion: v,
-          totalVentilacionesLocal: s.totalVentilacionesLocal + 1,
-        }));
-        break;
-      }
-      case "estadisticasVentilacion": {
-        const stats: EstadisticasVentilacion = {
-          totalVentilaciones: Number(msg.totalVentilaciones) || 0,
-          tiempoPromedioEntreVentilaciones:
-            Number(msg.tiempoPromedioEntreVentilaciones) || 0,
-          duracionPromedioVentilaciones:
-            Number(msg.duracionPromedioVentilaciones) || 0,
-          airePromedioVentilado: Number(msg.airePromedioVentilado) || 0,
-        };
-        setState((s) => ({
-          ...s,
-          estadisticasFinales: stats,
-          sesionActiva: false,
-        }));
-        break;
-      }
-      case "datosIniciales": {
-        setState((s) => ({
-          ...s,
-          estudiante: String(msg.estudiante ?? ""),
-          duracionPrueba: Number(msg.duracionPrueba) || s.duracionPrueba,
-          lecturaMaximaCMPresion:
-            Number(msg.lecturaMaximaCMPresion) || s.lecturaMaximaCMPresion,
-        }));
-        break;
-      }
-      case "iniciaGrafica": {
-        startTsRef.current = Date.now();
-        setState((s) => ({
-          ...s,
-          compresiones: [],
-          totalCompresiones: 0,
-          cuentaPress30s: 0,
-          totalVentilacionesLocal: 0,
-          estadisticasFinales: null,
-          sesionActiva: true,
-          lecturaMaximaCMPresion:
-            Number(msg.lecturaMaximaCMPresion) || s.lecturaMaximaCMPresion,
-        }));
-        break;
-      }
-      case "cargaBateria": {
-        setState((s) => ({
-          ...s,
-          bateria: Number(msg.porcentajeCargaBatt) || 0,
-        }));
-        break;
-      }
-    }
-  };
-
   const send = (payload: object) => {
     const ws = wsRef.current;
     if (ws && ws.readyState === WebSocket.OPEN) {
       ws.send(JSON.stringify(payload));
+      log("event", `→ ${JSON.stringify(payload)}`);
       return true;
     }
     return false;
@@ -310,6 +370,10 @@ export function PepeProvider({ children }: { children: ReactNode }) {
       estadisticasFinales: null,
       sesionActiva: true,
     }));
+    if (simulating) {
+      startSimulation(estudiante, duracionPrueba);
+      return;
+    }
     send({
       type: "envioComandoaESP",
       estadoConexion: "start",
@@ -318,11 +382,15 @@ export function PepeProvider({ children }: { children: ReactNode }) {
     });
   };
   const sendStop = () => {
+    if (simulating) {
+      stopSimulation();
+      return;
+    }
     send({ type: "envioComandoaESP", estadoConexion: "stop" });
     setState((s) => ({ ...s, sesionActiva: false }));
   };
   const sendReset = () => {
-    send({ type: "envioComandoaESP", estadoConexion: "reset" });
+    if (!simulating) send({ type: "envioComandoaESP", estadoConexion: "reset" });
     setState((s) => ({
       ...s,
       compresiones: [],
@@ -335,11 +403,121 @@ export function PepeProvider({ children }: { children: ReactNode }) {
     }));
   };
 
+  // ------------- SIMULACIÓN -------------
+  const stopSimulation = useCallback(() => {
+    const s = simRef.current;
+    if (s) {
+      if (s.tickComp) window.clearInterval(s.tickComp);
+      if (s.tickVent) window.clearInterval(s.tickVent);
+      if (s.endTimer) window.clearTimeout(s.endTimer);
+      // emitir estadísticas finales
+      const total = s.ventCount;
+      const durProm =
+        s.ventDurations.reduce((a, b) => a + b, 0) / Math.max(1, s.ventDurations.length);
+      const airProm =
+        s.ventVolumes.reduce((a, b) => a + b, 0) / Math.max(1, s.ventVolumes.length);
+      const gapProm =
+        s.ventGaps.reduce((a, b) => a + b, 0) / Math.max(1, s.ventGaps.length);
+      handleMessage({
+        type: "estadisticasVentilacion",
+        totalVentilaciones: total,
+        tiempoPromedioEntreVentilaciones: gapProm / 1000,
+        duracionPromedioVentilaciones: durProm,
+        airePromedioVentilado: airProm,
+      });
+    }
+    simRef.current = null;
+    setState((st) => ({ ...st, sesionActiva: false }));
+    log("info", "Simulación detenida");
+  }, [handleMessage, log]);
+
+  const startSimulation = useCallback(
+    (estudiante = "Alumno de prueba", duracion = 60) => {
+      // Cerrar WS real si estaba
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
+      if (reconnectRef.current) {
+        window.clearTimeout(reconnectRef.current);
+        reconnectRef.current = null;
+      }
+      if (simRef.current) stopSimulation();
+
+      setSimulating(true);
+      setState((s) => ({ ...s, status: "connected", bateria: 87 }));
+      log("info", `Iniciando simulación (${estudiante}, ${duracion}s)`);
+
+      handleMessage({
+        type: "datosIniciales",
+        estudiante,
+        estadoConexion: "start",
+        lecturaMaximaCMPresion: 8,
+        duracionPrueba: duracion,
+      });
+      handleMessage({ type: "iniciaGrafica", lecturaMaximaCMPresion: 8 });
+
+      const store: NonNullable<typeof simRef.current> = {
+        ventCount: 0,
+        ventDurations: [],
+        ventVolumes: [],
+        ventGaps: [],
+        lastVentAt: 0,
+        press30Window: [],
+      };
+      simRef.current = store;
+
+      // compresiones ~110/min → ~545 ms
+      store.tickComp = window.setInterval(() => {
+        const cm = 4.5 + Math.random() * 2.2; // 4.5 - 6.7
+        handleMessage({ type: "datosMediciones", cmPresion: Number(cm.toFixed(2)) });
+        const now = Date.now();
+        store.press30Window.push(now);
+        store.press30Window = store.press30Window.filter((t) => now - t <= 30000);
+        handleMessage({ type: "presiones", cuentaPress: store.press30Window.length });
+      }, 545);
+
+      // ventilaciones cada ~6s (2 vent / 30 comp)
+      store.tickVent = window.setInterval(() => {
+        const now = Date.now();
+        if (store.lastVentAt) store.ventGaps.push(now - store.lastVentAt);
+        store.lastVentAt = now;
+        const dur = 900 + Math.random() * 400;
+        const vol = 450 + Math.random() * 200;
+        store.ventDurations.push(dur);
+        store.ventVolumes.push(vol);
+        store.ventCount += 1;
+        handleMessage({
+          type: "ventilacion",
+          cm3ventilados: Math.round(vol),
+          duracionVentilacion: Math.round(dur),
+        });
+      }, 6000);
+
+      store.endTimer = window.setTimeout(() => {
+        stopSimulation();
+      }, duracion * 1000);
+    },
+    [handleMessage, log, stopSimulation],
+  );
+
+  // Cuando debug se apaga, cortar simulación
   useEffect(() => {
-    // no auto-connect until a page opts in
+    if (!debugMode && simulating) {
+      stopSimulation();
+      setSimulating(false);
+    }
+  }, [debugMode, simulating, stopSimulation]);
+
+  useEffect(() => {
     return () => {
       wsRef.current?.close();
       if (reconnectRef.current) window.clearTimeout(reconnectRef.current);
+      if (simRef.current) {
+        if (simRef.current.tickComp) window.clearInterval(simRef.current.tickComp);
+        if (simRef.current.tickVent) window.clearInterval(simRef.current.tickVent);
+        if (simRef.current.endTimer) window.clearTimeout(simRef.current.endTimer);
+      }
     };
   }, []);
 
@@ -356,8 +534,20 @@ export function PepeProvider({ children }: { children: ReactNode }) {
       isDocente,
       loginDocente,
       logoutDocente,
+      debugMode,
+      setDebugMode,
+      logs,
+      clearLogs,
+      simulating,
+      startSimulation: (e?: string, d?: number) =>
+        startSimulation(e, d ?? params.duracionPrueba),
+      stopSimulation: () => {
+        stopSimulation();
+        setSimulating(false);
+      },
     }),
-    [state, params, isDocente],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [state, params, isDocente, debugMode, logs, simulating],
   );
 
   return <PepeContext.Provider value={value}>{children}</PepeContext.Provider>;
@@ -369,13 +559,12 @@ export function usePepe() {
   return ctx;
 }
 
-// Auto-connect helper
 export function useAutoConnect() {
-  const { state, connect, params } = usePepe();
+  const { state, connect, params, simulating } = usePepe();
   useEffect(() => {
-    if (state.status === "disconnected") {
+    if (!simulating && state.status === "disconnected") {
       connect(params.wsUrl);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [simulating]);
 }
