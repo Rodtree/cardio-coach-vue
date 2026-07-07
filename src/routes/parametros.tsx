@@ -1,13 +1,24 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
-import { Save, RotateCcw } from "lucide-react";
+import { Save, RotateCcw, Bug, FileText } from "lucide-react";
 import { AppShell } from "@/components/pepe/AppShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { InformeView, MOCK_INFORME } from "@/components/pepe/InformeView";
 import { usePepe } from "@/lib/pepe-store";
 import { Toaster } from "@/components/ui/sonner";
 import { toast } from "sonner";
+
 
 export const Route = createFileRoute("/parametros")({
   head: () => ({
