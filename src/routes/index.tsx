@@ -41,7 +41,7 @@ function Index() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen bg-background">
       <Toaster richColors position="top-center" />
       <div className="absolute right-3 top-3">
         <ThemeToggle />
