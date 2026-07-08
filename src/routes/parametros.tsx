@@ -206,7 +206,7 @@ function ParamsPage() {
                 </DialogDescription>
               </DialogHeader>
               <div className="mt-4">
-                <InformeView data={MOCK_INFORME} />
+                <InformeView data={MOCK_INFORME} preview />
               </div>
             </DialogContent>
           </Dialog>
