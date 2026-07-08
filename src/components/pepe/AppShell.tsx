@@ -1,26 +1,11 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Activity, BatteryFull, BatteryLow, BatteryMedium, WifiOff, Wifi, Loader2, Moon, Sun } from "lucide-react";
+import { Activity, BatteryFull, BatteryLow, BatteryMedium, WifiOff, Wifi, Loader2 } from "lucide-react";
 import { usePepe } from "@/lib/pepe-store";
-import { useTheme } from "@/lib/theme";
-import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "@/components/pepe/ThemeToggle";
 import { DebugPanel } from "@/components/pepe/DebugPanel";
 import { cn } from "@/lib/utils";
 import type { ReactNode } from "react";
 
-function ThemeToggle() {
-  const { theme, toggle } = useTheme();
-  return (
-    <Button
-      variant="ghost"
-      size="icon"
-      onClick={toggle}
-      aria-label={theme === "dark" ? "Cambiar a modo claro" : "Cambiar a modo oscuro"}
-      className="size-8"
-    >
-      {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
-    </Button>
-  );
-}
 
 
 function StatusPill() {
