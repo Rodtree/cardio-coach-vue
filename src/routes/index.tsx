@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { usePepe } from "@/lib/pepe-store";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeToggle } from "@/components/pepe/ThemeToggle";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -39,9 +41,13 @@ function Index() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="relative min-h-screen bg-background">
       <Toaster richColors position="top-center" />
+      <div className="absolute right-3 top-3">
+        <ThemeToggle />
+      </div>
       <div className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-5 py-10">
+
         <div className="mb-8 text-center">
           <div className="mx-auto mb-3 grid size-14 place-items-center rounded-2xl bg-primary text-primary-foreground shadow-lg shadow-primary/25">
             <HeartPulse className="size-7" />

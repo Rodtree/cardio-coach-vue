@@ -43,6 +43,7 @@ export interface Params {
   objetivoProfundidadMax: number;
   objetivoCompresionesPorMin: number;
   wsUrl: string;
+  instructor: string;
 }
 
 const PARAM_KEY = "pepe.params";
@@ -56,7 +57,9 @@ const DEFAULT_PARAMS: Params = {
   objetivoProfundidadMax: 6,
   objetivoCompresionesPorMin: 110,
   wsUrl: "ws://192.168.10.1:81",
+  instructor: "",
 };
+
 
 export interface CompresionPoint {
   t: number;

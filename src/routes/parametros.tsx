@@ -56,11 +56,13 @@ function ParamsPage() {
       objetivoProfundidadMax: 6,
       objetivoCompresionesPorMin: 110,
       wsUrl: "ws://192.168.10.1:81",
+      instructor: "",
     };
     setForm(defaults);
     setParams(defaults);
     toast.info("Parámetros restablecidos");
   };
+
 
   return (
     <AppShell title="Parámetros de práctica">
@@ -129,6 +131,16 @@ function ParamsPage() {
             />
           </Field>
         </div>
+        <div className="sm:col-span-2">
+          <Field label="Instructor / Responsable" hint="Aparece en el informe y en el bloque de validación">
+            <Input
+              value={form.instructor}
+              onChange={(e) => setForm({ ...form, instructor: e.target.value })}
+              placeholder="Nombre y apellido del docente responsable"
+            />
+          </Field>
+        </div>
+
       </div>
 
       <div className="mt-6 flex flex-wrap gap-2">
@@ -194,7 +206,7 @@ function ParamsPage() {
                 </DialogDescription>
               </DialogHeader>
               <div className="mt-4">
-                <InformeView data={MOCK_INFORME} />
+                <InformeView data={MOCK_INFORME} preview />
               </div>
             </DialogContent>
           </Dialog>
