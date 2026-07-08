@@ -56,11 +56,13 @@ function ParamsPage() {
       objetivoProfundidadMax: 6,
       objetivoCompresionesPorMin: 110,
       wsUrl: "ws://192.168.10.1:81",
+      instructor: "",
     };
     setForm(defaults);
     setParams(defaults);
     toast.info("Parámetros restablecidos");
   };
+
 
   return (
     <AppShell title="Parámetros de práctica">
