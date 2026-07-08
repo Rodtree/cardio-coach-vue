@@ -7,6 +7,8 @@ import { Label } from "@/components/ui/label";
 import { usePepe } from "@/lib/pepe-store";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
+import { ThemeToggle } from "@/components/pepe/ThemeToggle";
+
 
 export const Route = createFileRoute("/")({
   head: () => ({
