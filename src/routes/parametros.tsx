@@ -131,6 +131,16 @@ function ParamsPage() {
             />
           </Field>
         </div>
+        <div className="sm:col-span-2">
+          <Field label="Instructor / Responsable" hint="Aparece en el informe y en el bloque de validación">
+            <Input
+              value={form.instructor}
+              onChange={(e) => setForm({ ...form, instructor: e.target.value })}
+              placeholder="Nombre y apellido del docente responsable"
+            />
+          </Field>
+        </div>
+
       </div>
 
       <div className="mt-6 flex flex-wrap gap-2">
