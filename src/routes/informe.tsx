@@ -21,6 +21,8 @@ function InformePage() {
     <AppShell title="Informe de sesión">
       <InformeView
         data={{
+          sesionId: `live-${state.estudiante}-${state.duracionPrueba}`,
+          fechaISO: new Date().toISOString(),
           estudiante: state.estudiante,
           duracionPrueba: state.duracionPrueba,
           totalCompresiones: state.totalCompresiones,
@@ -29,6 +31,7 @@ function InformePage() {
           estadisticasFinales: state.estadisticasFinales,
         }}
       />
+
       <div className="mt-8 flex flex-wrap gap-2">
         <Button asChild>
           <Link to="/docente">Volver al panel docente</Link>
