@@ -13,6 +13,8 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { PepeProvider } from "../lib/pepe-store";
 import { ThemeProvider } from "../lib/theme";
+import { AutoSaveInforme } from "../components/pepe/AutoSaveInforme";
+
 
 
 function NotFoundComponent() {
