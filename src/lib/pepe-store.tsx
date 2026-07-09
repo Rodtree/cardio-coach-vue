@@ -80,7 +80,10 @@ export interface PepeState {
   totalVentilacionesLocal: number;
   estadisticasFinales: EstadisticasVentilacion | null;
   sesionActiva: boolean;
+  sesionId: string | null;
+  sesionStartISO: string | null;
 }
+
 
 export interface LogEntry {
   ts: number;
