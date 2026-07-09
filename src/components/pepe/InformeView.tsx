@@ -46,11 +46,16 @@ function hashCode(str: string) {
   return Math.abs(h);
 }
 
-function verificationCode(data: InformeData) {
+export function verificationCode(data: InformeData) {
   const seed = `${data.sesionId ?? ""}|${data.fechaISO ?? ""}|${data.estudiante}|${data.totalCompresiones}`;
   const h = hashCode(seed).toString(36).toUpperCase().padStart(6, "0").slice(0, 6);
   return `PEPE-${h}`;
 }
+
+export function informeFilename(data: InformeData) {
+  return `Informe_${safeFilenamePart(data.estudiante)}_${verificationCode(data)}.pdf`;
+}
+
 
 function formatFechaLarga(iso?: string) {
   const d = iso ? new Date(iso) : new Date();
