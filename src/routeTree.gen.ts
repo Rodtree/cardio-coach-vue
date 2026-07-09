@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ParametrosRouteImport } from './routes/parametros'
 import { Route as InformeRouteImport } from './routes/informe'
+import { Route as HistorialRouteImport } from './routes/historial'
 import { Route as EstudianteRouteImport } from './routes/estudiante'
 import { Route as DocenteRouteImport } from './routes/docente'
 import { Route as IndexRouteImport } from './routes/index'
@@ -23,6 +24,11 @@ const ParametrosRoute = ParametrosRouteImport.update({
 const InformeRoute = InformeRouteImport.update({
   id: '/informe',
   path: '/informe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HistorialRoute = HistorialRouteImport.update({
+  id: '/historial',
+  path: '/historial',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EstudianteRoute = EstudianteRouteImport.update({
@@ -45,6 +51,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/docente': typeof DocenteRoute
   '/estudiante': typeof EstudianteRoute
+  '/historial': typeof HistorialRoute
   '/informe': typeof InformeRoute
   '/parametros': typeof ParametrosRoute
 }
@@ -52,6 +59,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/docente': typeof DocenteRoute
   '/estudiante': typeof EstudianteRoute
+  '/historial': typeof HistorialRoute
   '/informe': typeof InformeRoute
   '/parametros': typeof ParametrosRoute
 }
@@ -60,21 +68,42 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/docente': typeof DocenteRoute
   '/estudiante': typeof EstudianteRoute
+  '/historial': typeof HistorialRoute
   '/informe': typeof InformeRoute
   '/parametros': typeof ParametrosRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/docente' | '/estudiante' | '/informe' | '/parametros'
+  fullPaths:
+    | '/'
+    | '/docente'
+    | '/estudiante'
+    | '/historial'
+    | '/informe'
+    | '/parametros'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/docente' | '/estudiante' | '/informe' | '/parametros'
-  id: '__root__' | '/' | '/docente' | '/estudiante' | '/informe' | '/parametros'
+  to:
+    | '/'
+    | '/docente'
+    | '/estudiante'
+    | '/historial'
+    | '/informe'
+    | '/parametros'
+  id:
+    | '__root__'
+    | '/'
+    | '/docente'
+    | '/estudiante'
+    | '/historial'
+    | '/informe'
+    | '/parametros'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DocenteRoute: typeof DocenteRoute
   EstudianteRoute: typeof EstudianteRoute
+  HistorialRoute: typeof HistorialRoute
   InformeRoute: typeof InformeRoute
   ParametrosRoute: typeof ParametrosRoute
 }
@@ -93,6 +122,13 @@ declare module '@tanstack/react-router' {
       path: '/informe'
       fullPath: '/informe'
       preLoaderRoute: typeof InformeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/historial': {
+      id: '/historial'
+      path: '/historial'
+      fullPath: '/historial'
+      preLoaderRoute: typeof HistorialRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/estudiante': {
@@ -123,6 +159,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DocenteRoute: DocenteRoute,
   EstudianteRoute: EstudianteRoute,
+  HistorialRoute: HistorialRoute,
   InformeRoute: InformeRoute,
   ParametrosRoute: ParametrosRoute,
 }
