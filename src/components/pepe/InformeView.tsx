@@ -1,8 +1,10 @@
-import { useMemo, useRef, useState } from "react";
+import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePepe, type EstadisticasVentilacion } from "@/lib/pepe-store";
+import { capturePdfBlob, downloadBlob, safeFilenamePart } from "@/lib/pdf-export";
 import ispmLogoAsset from "@/assets/ispm-logo.png.asset.json";
+
 
 export interface InformeData {
   sesionId?: string;
