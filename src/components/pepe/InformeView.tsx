@@ -358,8 +358,10 @@ export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
         </div>
       </div>
     </div>
-  );
-}
+    );
+  },
+);
+
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
