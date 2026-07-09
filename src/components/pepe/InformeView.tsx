@@ -95,7 +95,7 @@ export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
     { data, preview = false, instructorOverride, hideChrome = false },
     ref,
   ) {
-    const pepe = useSafePepe();
+    const pepe = usePepe();
     const stats = data.estadisticasFinales;
     const codigo = useMemo(() => verificationCode(data), [data]);
     const fechaLarga = formatFechaLarga(data.fechaISO);
