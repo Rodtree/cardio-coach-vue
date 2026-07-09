@@ -21,8 +21,9 @@ function InformePage() {
     <AppShell title="Informe de sesión">
       <InformeView
         data={{
-          sesionId: `live-${state.estudiante}-${state.duracionPrueba}`,
-          fechaISO: new Date().toISOString(),
+          sesionId: state.sesionId ?? undefined,
+          fechaISO: state.sesionStartISO ?? undefined,
+
           estudiante: state.estudiante,
           duracionPrueba: state.duracionPrueba,
           totalCompresiones: state.totalCompresiones,
