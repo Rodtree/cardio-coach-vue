@@ -146,7 +146,9 @@ function RootComponent() {
       <ThemeProvider>
         <PepeProvider>
           <Outlet />
+          <AutoSaveInforme />
         </PepeProvider>
+
       </ThemeProvider>
     </QueryClientProvider>
   );
