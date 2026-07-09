@@ -76,12 +76,6 @@ function formatFechaHora(iso?: string) {
   });
 }
 
-export function InformeView({
-  data,
-  preview = false,
-}: {
-  data: InformeData;
-  preview?: boolean;
 export interface InformeViewHandle {
   getPdfBlob: () => Promise<Blob>;
   getElement: () => HTMLDivElement | null;
