@@ -129,6 +129,9 @@ const initialState: PepeState = {
   totalVentilacionesLocal: 0,
   estadisticasFinales: null,
   sesionActiva: false,
+  sesionId: null,
+  sesionStartISO: null,
+
 };
 
 function loadParams(): Params {
