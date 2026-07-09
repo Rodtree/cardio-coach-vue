@@ -284,10 +284,15 @@ export function PepeProvider({ children }: { children: ReactNode }) {
             totalVentilacionesLocal: 0,
             estadisticasFinales: null,
             sesionActiva: true,
+            sesionId:
+              s.sesionId ??
+              `sess-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
+            sesionStartISO: s.sesionStartISO ?? new Date().toISOString(),
             lecturaMaximaCMPresion:
               Number(msg.lecturaMaximaCMPresion) || s.lecturaMaximaCMPresion,
           }));
           break;
+
         }
         case "cargaBateria": {
           setState((s) => ({
