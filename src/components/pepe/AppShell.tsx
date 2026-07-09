@@ -56,7 +56,9 @@ const NAV = [
   { to: "/estudiante", label: "Estudiante" },
   { to: "/parametros", label: "Parámetros" },
   { to: "/informe", label: "Informe" },
+  { to: "/historial", label: "Historial" },
 ] as const;
+
 
 export function AppShell({ children, title }: { children: ReactNode; title?: string }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname });

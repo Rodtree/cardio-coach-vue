@@ -1,8 +1,10 @@
-import { useMemo, useRef, useState } from "react";
+import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePepe, type EstadisticasVentilacion } from "@/lib/pepe-store";
+import { capturePdfBlob, downloadBlob, safeFilenamePart } from "@/lib/pdf-export";
 import ispmLogoAsset from "@/assets/ispm-logo.png.asset.json";
+
 
 export interface InformeData {
   sesionId?: string;
@@ -44,11 +46,16 @@ function hashCode(str: string) {
   return Math.abs(h);
 }
 
-function verificationCode(data: InformeData) {
+export function verificationCode(data: InformeData) {
   const seed = `${data.sesionId ?? ""}|${data.fechaISO ?? ""}|${data.estudiante}|${data.totalCompresiones}`;
   const h = hashCode(seed).toString(36).toUpperCase().padStart(6, "0").slice(0, 6);
   return `PEPE-${h}`;
 }
+
+export function informeFilename(data: InformeData) {
+  return `Informe_${safeFilenamePart(data.estudiante)}_${verificationCode(data)}.pdf`;
+}
+
 
 function formatFechaLarga(iso?: string) {
   const d = iso ? new Date(iso) : new Date();
@@ -69,90 +76,76 @@ function formatFechaHora(iso?: string) {
   });
 }
 
-export function InformeView({
-  data,
-  preview = false,
-}: {
+export interface InformeViewHandle {
+  getPdfBlob: () => Promise<Blob>;
+  getElement: () => HTMLDivElement | null;
+}
+
+export interface InformeViewProps {
   data: InformeData;
   preview?: boolean;
-}) {
-  const { params } = usePepe();
-  const stats = data.estadisticasFinales;
-  const codigo = useMemo(() => verificationCode(data), [data]);
-  const fechaLarga = formatFechaLarga(data.fechaISO);
-  const fechaHora = formatFechaHora(data.fechaISO);
-  const instructor = params.instructor?.trim() || "—";
-  const docRef = useRef<HTMLDivElement>(null);
-  const [downloading, setDownloading] = useState(false);
+  /** Override del instructor (para render offscreen sin PepeProvider) */
+  instructorOverride?: string;
+  /** Oculta el header con el botón de descarga */
+  hideChrome?: boolean;
+}
 
-  const download = async () => {
-    if (!docRef.current) return;
-    setDownloading(true);
-    try {
-      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-        import("html2canvas"),
-        import("jspdf"),
-      ]);
-      const canvas = await html2canvas(docRef.current, {
-        scale: 2,
-        backgroundColor: "#ffffff",
-        useCORS: true,
-      });
-      const img = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
-      const pageW = pdf.internal.pageSize.getWidth();
-      const pageH = pdf.internal.pageSize.getHeight();
-      const margin = 10;
-      const w = pageW - margin * 2;
-      const h = (canvas.height * w) / canvas.width;
-      if (h <= pageH - margin * 2) {
-        pdf.addImage(img, "PNG", margin, margin, w, h);
-      } else {
-        // Multi-página
-        const pageContentH = pageH - margin * 2;
-        const sliceHpx = (canvas.width * pageContentH) / w;
-        let y = 0;
-        while (y < canvas.height) {
-          const slice = document.createElement("canvas");
-          slice.width = canvas.width;
-          slice.height = Math.min(sliceHpx, canvas.height - y);
-          const ctx = slice.getContext("2d")!;
-          ctx.fillStyle = "#ffffff";
-          ctx.fillRect(0, 0, slice.width, slice.height);
-          ctx.drawImage(canvas, 0, -y);
-          const sImg = slice.toDataURL("image/png");
-          const sH = (slice.height * w) / slice.width;
-          pdf.addImage(sImg, "PNG", margin, margin, w, sH);
-          y += slice.height;
-          if (y < canvas.height) pdf.addPage();
-        }
+export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
+  function InformeView(
+    { data, preview = false, instructorOverride, hideChrome = false },
+    ref,
+  ) {
+    const pepe = usePepe();
+    const stats = data.estadisticasFinales;
+    const codigo = useMemo(() => verificationCode(data), [data]);
+    const fechaLarga = formatFechaLarga(data.fechaISO);
+    const fechaHora = formatFechaHora(data.fechaISO);
+    const instructor =
+      instructorOverride?.trim() || pepe.params.instructor?.trim() || "—";
+    const docRef = useRef<HTMLDivElement>(null);
+    const [downloading, setDownloading] = useState(false);
+
+    useImperativeHandle(
+      ref,
+      () => ({
+        getPdfBlob: async () => {
+          if (!docRef.current) throw new Error("Informe no montado");
+          return await capturePdfBlob(docRef.current);
+        },
+        getElement: () => docRef.current,
+      }),
+      [],
+    );
+
+    const download = async () => {
+      if (!docRef.current) return;
+      setDownloading(true);
+      try {
+        const blob = await capturePdfBlob(docRef.current);
+        downloadBlob(blob, informeFilename(data));
+      } finally {
+        setDownloading(false);
       }
-      const safeName = (data.estudiante || "sin-nombre")
-        .replace(/[^a-zA-Z0-9-_ ]/g, "")
-        .trim()
-        .replace(/\s+/g, "-")
-        .toLowerCase();
-      pdf.save(`informe-pepe-${safeName}-${codigo}.pdf`);
-    } finally {
-      setDownloading(false);
-    }
-  };
+    };
 
-  return (
-    <div>
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs text-muted-foreground">
-          Documento oficial de práctica · ISPM N°1
-        </p>
-        <Button onClick={download} disabled={downloading} size="sm">
-          {downloading ? (
-            <Loader2 className="mr-2 size-4 animate-spin" />
-          ) : (
-            <Download className="mr-2 size-4" />
-          )}
-          Descargar informe (PDF)
-        </Button>
-      </div>
+    return (
+      <div>
+        {!hideChrome && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground">
+              Documento oficial de práctica · ISPM N°1
+            </p>
+            <Button onClick={download} disabled={downloading} size="sm">
+              {downloading ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : (
+                <Download className="mr-2 size-4" />
+              )}
+              Descargar informe (PDF)
+            </Button>
+          </div>
+        )}
+
 
       <div
         ref={docRef}
@@ -365,8 +358,10 @@ export function InformeView({
         </div>
       </div>
     </div>
-  );
-}
+    );
+  },
+);
+
 
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
