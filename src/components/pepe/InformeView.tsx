@@ -101,7 +101,7 @@ export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
     const fechaLarga = formatFechaLarga(data.fechaISO);
     const fechaHora = formatFechaHora(data.fechaISO);
     const instructor =
-      instructorOverride?.trim() || pepe?.params.instructor?.trim() || "—";
+      instructorOverride?.trim() || pepe.params.instructor?.trim() || "—";
     const docRef = useRef<HTMLDivElement>(null);
     const [downloading, setDownloading] = useState(false);
 
