@@ -22,7 +22,7 @@ const rootDir = fileURLToPath(new URL(".", import.meta.url));
 const outDir = path.join(rootDir, "dist-spa");
 
 export default defineConfig({
-  base: "./",
+  base: "/",
   plugins: [
     tsConfigPaths(),
     tanstackRouter({
