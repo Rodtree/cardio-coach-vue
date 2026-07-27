@@ -189,7 +189,7 @@ export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
             style={{ borderBottom: `2px solid ${AZUL}` }}
           >
             <img
-              src={ispmLogoAsset.url}
+              src={ispmLogoUrl}
               alt="Escudo Instituto Superior Politécnico Misiones N°1"
               crossOrigin="anonymous"
               style={{ width: 84, height: 84, objectFit: "contain" }}
