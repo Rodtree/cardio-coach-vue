@@ -3,7 +3,7 @@ import { Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePepe, type EstadisticasVentilacion } from "@/lib/pepe-store";
 import { capturePdfBlob, downloadBlob, safeFilenamePart } from "@/lib/pdf-export";
-import ispmLogoAsset from "@/assets/ispm-logo.png.asset.json";
+import ispmLogoUrl from "@/assets/ispm-logo.png";
 
 
 export interface InformeData {
@@ -189,7 +189,7 @@ export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
             style={{ borderBottom: `2px solid ${AZUL}` }}
           >
             <img
-              src={ispmLogoAsset.url}
+              src={ispmLogoUrl}
               alt="Escudo Instituto Superior Politécnico Misiones N°1"
               crossOrigin="anonymous"
               style={{ width: 84, height: 84, objectFit: "contain" }}
