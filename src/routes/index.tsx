@@ -1,9 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
 import { GraduationCap, ShieldCheck, HeartPulse, Lock } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { usePepe } from "@/lib/pepe-store";
 import { toast } from "sonner";
 import { Toaster } from "@/components/ui/sonner";
@@ -26,19 +22,7 @@ export const Route = createFileRoute("/")({
 
 function Index() {
   const navigate = useNavigate();
-  const { isDocente, loginDocente, logoutDocente } = usePepe();
-  const [showPw, setShowPw] = useState(false);
-  const [pw, setPw] = useState("");
-
-  const submitDocente = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (loginDocente(pw)) {
-      toast.success("Sesión docente iniciada");
-      navigate({ to: "/docente" });
-    } else {
-      toast.error("Contraseña incorrecta");
-    }
-  };
+  const { isDocente, logoutDocente } = usePepe();
 
   return (
     <div className="relative min-h-screen bg-background">
@@ -62,86 +46,45 @@ function Index() {
         </div>
 
         <div className="space-y-3">
-          {!showPw ? (
-            <>
-              <button
-                onClick={() => setShowPw(true)}
-                className="group flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-sm transition hover:border-primary hover:shadow-md"
-              >
-                <span className="grid size-11 place-items-center rounded-lg bg-primary/10 text-primary">
-                  <ShieldCheck className="size-5" />
-                </span>
-                <span className="flex-1">
-                  <span className="block font-semibold">Docente</span>
-                  <span className="block text-xs text-muted-foreground">
-                    Controlar sesión y ver métricas
-                  </span>
-                </span>
-                <Lock className="size-4 text-muted-foreground" />
-              </button>
-              <button
-                onClick={() => navigate({ to: "/estudiante" })}
-                className="group flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-sm transition hover:border-primary hover:shadow-md"
-              >
-                <span className="grid size-11 place-items-center rounded-lg bg-accent text-accent-foreground">
-                  <GraduationCap className="size-5" />
-                </span>
-                <span className="flex-1">
-                  <span className="block font-semibold">Estudiante</span>
-                  <span className="block text-xs text-muted-foreground">
-                    Ver mi práctica en vivo
-                  </span>
-                </span>
-              </button>
-              {isDocente && (
-                <button
-                  onClick={() => {
-                    logoutDocente();
-                    toast.info("Sesión docente cerrada");
-                  }}
-                  className="mt-2 w-full text-center text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
-                >
-                  Cerrar sesión docente activa
-                </button>
-              )}
-            </>
-          ) : (
-            <form
-              onSubmit={submitDocente}
-              className="rounded-xl border border-border bg-card p-5 shadow-sm"
+          <button
+            onClick={() => navigate({ to: "/iniciar-sesion" })}
+            className="group flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-sm transition hover:border-primary hover:shadow-md"
+          >
+            <span className="grid size-11 place-items-center rounded-lg bg-primary/10 text-primary">
+              <ShieldCheck className="size-5" />
+            </span>
+            <span className="flex-1">
+              <span className="block font-semibold">Docente</span>
+              <span className="block text-xs text-muted-foreground">
+                Controlar sesión y ver métricas
+              </span>
+            </span>
+            <Lock className="size-4 text-muted-foreground" />
+          </button>
+          <button
+            onClick={() => navigate({ to: "/estudiante" })}
+            className="group flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-sm transition hover:border-primary hover:shadow-md"
+          >
+            <span className="grid size-11 place-items-center rounded-lg bg-accent text-accent-foreground">
+              <GraduationCap className="size-5" />
+            </span>
+            <span className="flex-1">
+              <span className="block font-semibold">Estudiante</span>
+              <span className="block text-xs text-muted-foreground">
+                Ver mi práctica en vivo
+              </span>
+            </span>
+          </button>
+          {isDocente && (
+            <button
+              onClick={() => {
+                logoutDocente();
+                toast.info("Sesión docente cerrada");
+              }}
+              className="mt-2 w-full text-center text-xs text-muted-foreground underline underline-offset-2 hover:text-foreground"
             >
-              <div className="mb-3 flex items-center gap-2">
-                <ShieldCheck className="size-5 text-primary" />
-                <h2 className="font-semibold">Acceso Docente</h2>
-              </div>
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="pw">Contraseña</Label>
-                  <Input
-                    id="pw"
-                    type="password"
-                    autoFocus
-                    value={pw}
-                    onChange={(e) => setPw(e.target.value)}
-                    placeholder="Ingresá la contraseña"
-                    className="mt-1"
-                  />
-                </div>
-                <div className="flex gap-2">
-                  <Button type="submit" className="flex-1">Ingresar</Button>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    onClick={() => {
-                      setShowPw(false);
-                      setPw("");
-                    }}
-                  >
-                    Cancelar
-                  </Button>
-                </div>
-              </div>
-            </form>
+              Cerrar sesión docente activa
+            </button>
           )}
         </div>
 
@@ -152,3 +95,4 @@ function Index() {
     </div>
   );
 }
+

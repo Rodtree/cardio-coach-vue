@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as ParametrosRouteImport } from './routes/parametros'
+import { Route as IniciarSesionRouteImport } from './routes/iniciar-sesion'
 import { Route as InformeRouteImport } from './routes/informe'
 import { Route as HistorialRouteImport } from './routes/historial'
 import { Route as EstudianteRouteImport } from './routes/estudiante'
@@ -19,6 +20,11 @@ import { Route as IndexRouteImport } from './routes/index'
 const ParametrosRoute = ParametrosRouteImport.update({
   id: '/parametros',
   path: '/parametros',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const IniciarSesionRoute = IniciarSesionRouteImport.update({
+  id: '/iniciar-sesion',
+  path: '/iniciar-sesion',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InformeRoute = InformeRouteImport.update({
@@ -53,6 +59,7 @@ export interface FileRoutesByFullPath {
   '/estudiante': typeof EstudianteRoute
   '/historial': typeof HistorialRoute
   '/informe': typeof InformeRoute
+  '/iniciar-sesion': typeof IniciarSesionRoute
   '/parametros': typeof ParametrosRoute
 }
 export interface FileRoutesByTo {
@@ -61,6 +68,7 @@ export interface FileRoutesByTo {
   '/estudiante': typeof EstudianteRoute
   '/historial': typeof HistorialRoute
   '/informe': typeof InformeRoute
+  '/iniciar-sesion': typeof IniciarSesionRoute
   '/parametros': typeof ParametrosRoute
 }
 export interface FileRoutesById {
@@ -70,6 +78,7 @@ export interface FileRoutesById {
   '/estudiante': typeof EstudianteRoute
   '/historial': typeof HistorialRoute
   '/informe': typeof InformeRoute
+  '/iniciar-sesion': typeof IniciarSesionRoute
   '/parametros': typeof ParametrosRoute
 }
 export interface FileRouteTypes {
@@ -80,6 +89,7 @@ export interface FileRouteTypes {
     | '/estudiante'
     | '/historial'
     | '/informe'
+    | '/iniciar-sesion'
     | '/parametros'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -88,6 +98,7 @@ export interface FileRouteTypes {
     | '/estudiante'
     | '/historial'
     | '/informe'
+    | '/iniciar-sesion'
     | '/parametros'
   id:
     | '__root__'
@@ -96,6 +107,7 @@ export interface FileRouteTypes {
     | '/estudiante'
     | '/historial'
     | '/informe'
+    | '/iniciar-sesion'
     | '/parametros'
   fileRoutesById: FileRoutesById
 }
@@ -105,6 +117,7 @@ export interface RootRouteChildren {
   EstudianteRoute: typeof EstudianteRoute
   HistorialRoute: typeof HistorialRoute
   InformeRoute: typeof InformeRoute
+  IniciarSesionRoute: typeof IniciarSesionRoute
   ParametrosRoute: typeof ParametrosRoute
 }
 
@@ -115,6 +128,13 @@ declare module '@tanstack/react-router' {
       path: '/parametros'
       fullPath: '/parametros'
       preLoaderRoute: typeof ParametrosRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/iniciar-sesion': {
+      id: '/iniciar-sesion'
+      path: '/iniciar-sesion'
+      fullPath: '/iniciar-sesion'
+      preLoaderRoute: typeof IniciarSesionRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/informe': {
@@ -161,6 +181,7 @@ const rootRouteChildren: RootRouteChildren = {
   EstudianteRoute: EstudianteRoute,
   HistorialRoute: HistorialRoute,
   InformeRoute: InformeRoute,
+  IniciarSesionRoute: IniciarSesionRoute,
   ParametrosRoute: ParametrosRoute,
 }
 export const routeTree = rootRouteImport
