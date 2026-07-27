@@ -23,6 +23,9 @@ const outDir = path.join(rootDir, "dist-spa");
 
 export default defineConfig({
   base: "/",
+  define: {
+    __SPA_BUILD__: JSON.stringify(true),
+  },
   plugins: [
     tsConfigPaths(),
     tanstackRouter({
