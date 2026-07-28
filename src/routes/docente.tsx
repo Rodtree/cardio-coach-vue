@@ -24,7 +24,7 @@ export const Route = createFileRoute("/docente")({
 
 function DocentePage() {
   const navigate = useNavigate();
-  const { state, params, isDocente, sendStart, sendStop, sendReset } = usePepe();
+  const { state, params, isDocente, simulating, sendStart, sendStop, sendReset } = usePepe();
   useAutoConnect();
 
   const [alumno, setAlumno] = useState("");
@@ -43,11 +43,17 @@ function DocentePage() {
       toast.error("Ingresá el nombre del alumno");
       return;
     }
-    if (state.status !== "connected") {
+    // TEMPORAL (diagnóstico bug 2ª práctica)
+    console.log("[PEPE] antes de sendStart:", state.status, state.sesionActiva);
+    if (!simulating && state.status !== "connected") {
       toast.error("Sin conexión al robot");
       return;
     }
-    sendStart(alumno.trim(), duracion);
+    const ok = sendStart(alumno.trim(), duracion);
+    if (!ok) {
+      toast.error("No se pudo iniciar: reconectando con el robot, probá de nuevo");
+      return;
+    }
     toast.success(`Sesión iniciada — ${alumno.trim()}`);
   };
   const detener = () => {

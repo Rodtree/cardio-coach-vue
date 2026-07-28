@@ -1,5 +1,14 @@
 import { Link, useRouterState } from "@tanstack/react-router";
-import { Activity, BatteryFull, BatteryLow, BatteryMedium, WifiOff, Wifi, Loader2 } from "lucide-react";
+import {
+  Activity,
+  BatteryFull,
+  BatteryLow,
+  BatteryMedium,
+  BatteryCharging,
+  WifiOff,
+  Wifi,
+  Loader2,
+} from "lucide-react";
 import { usePepe } from "@/lib/pepe-store";
 import { ThemeToggle } from "@/components/pepe/ThemeToggle";
 import { DebugPanel } from "@/components/pepe/DebugPanel";
@@ -35,17 +44,41 @@ function BatteryPill() {
   const { state } = usePepe();
   if (state.bateria === null) return null;
   const b = state.bateria;
-  const Icon = b > 66 ? BatteryFull : b > 30 ? BatteryMedium : BatteryLow;
-  const cls =
-    b > 30
+  const cargando = state.tendencia === "cargando";
+  const Icon = cargando
+    ? BatteryCharging
+    : b > 66
+      ? BatteryFull
+      : b > 30
+        ? BatteryMedium
+        : BatteryLow;
+  const cls = cargando
+    ? "text-primary"
+    : b > 30
       ? "text-success"
       : b > 15
         ? "text-warning-foreground"
         : "text-destructive";
+  const mostrarRestante =
+    state.tendencia === "descargando" && state.minutosRestantesEstimados > 0;
+  const titulo =
+    state.tendencia === "cargando"
+      ? "Batería cargando"
+      : state.tendencia === "descargando"
+        ? "Batería descargando"
+        : "Batería estable";
   return (
-    <span className={cn("inline-flex items-center gap-1 text-xs font-medium", cls)}>
-      <Icon className="size-4" />
+    <span
+      title={titulo}
+      className={cn("inline-flex items-center gap-1 text-xs font-medium", cls)}
+    >
+      <Icon className={cn("size-4", state.tendencia === "estable" && "opacity-80")} />
       {Math.round(b)}%
+      {mostrarRestante && (
+        <span className="text-muted-foreground">
+          ~{Math.round(state.minutosRestantesEstimados)} min
+        </span>
+      )}
     </span>
   );
 }
