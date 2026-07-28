@@ -15,7 +15,7 @@ import { PepeProvider } from "../lib/pepe-store";
 import { ThemeProvider } from "../lib/theme";
 import { AutoSaveInforme } from "../components/pepe/AutoSaveInforme";
 
-
+declare const __SPA_BUILD__: boolean | undefined;
 
 function NotFoundComponent() {
   return (
@@ -126,6 +126,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  if (typeof __SPA_BUILD__ !== "undefined" && __SPA_BUILD__) {
+    return <>{children}</>;
+  }
   return (
     <html lang="es-AR">
       <head>
