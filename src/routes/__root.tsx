@@ -15,7 +15,7 @@ import { PepeProvider } from "../lib/pepe-store";
 import { ThemeProvider } from "../lib/theme";
 import { AutoSaveInforme } from "../components/pepe/AutoSaveInforme";
 
-
+declare const __SPA_BUILD__: boolean | undefined;
 
 function NotFoundComponent() {
   return (
