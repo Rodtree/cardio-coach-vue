@@ -66,9 +66,14 @@ export interface CompresionPoint {
   cm: number;
 }
 
+export type TendenciaBateria = "cargando" | "descargando" | "estable";
+
 export interface PepeState {
   status: ConnStatus;
   bateria: number | null;
+  tendencia: TendenciaBateria;
+  tasaPctPorMin: number;
+  minutosRestantesEstimados: number;
   estudiante: string;
   duracionPrueba: number;
   lecturaMaximaCMPresion: number;
@@ -118,6 +123,9 @@ const PepeContext = createContext<PepeContextValue | null>(null);
 const initialState: PepeState = {
   status: "disconnected",
   bateria: null,
+  tendencia: "estable",
+  tasaPctPorMin: 0,
+  minutosRestantesEstimados: -1,
   estudiante: "",
   duracionPrueba: 300,
   lecturaMaximaCMPresion: 6,
@@ -295,9 +303,18 @@ export function PepeProvider({ children }: { children: ReactNode }) {
 
         }
         case "cargaBateria": {
+          const tRaw = String(msg.tendencia ?? "estable");
+          const tendencia: TendenciaBateria =
+            tRaw === "cargando" || tRaw === "descargando" ? tRaw : "estable";
           setState((s) => ({
             ...s,
             bateria: Number(msg.porcentajeCargaBatt) || 0,
+            tendencia,
+            tasaPctPorMin: Number(msg.tasaPctPorMin) || 0,
+            minutosRestantesEstimados:
+              msg.minutosRestantesEstimados === undefined
+                ? -1
+                : Number(msg.minutosRestantesEstimados),
           }));
           break;
         }
@@ -462,7 +479,14 @@ export function PepeProvider({ children }: { children: ReactNode }) {
       if (simRef.current) stopSimulation();
 
       setSimulating(true);
-      setState((s) => ({ ...s, status: "connected", bateria: 87 }));
+      setState((s) => ({
+        ...s,
+        status: "connected",
+        bateria: 87,
+        tendencia: "descargando",
+        tasaPctPorMin: 0.4,
+        minutosRestantesEstimados: 120,
+      }));
       log("info", `Iniciando simulación (${estudiante}, ${duracion}s)`);
 
       handleMessage({

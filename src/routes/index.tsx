@@ -47,7 +47,7 @@ function Index() {
 
         <div className="space-y-3">
           <button
-            onClick={() => navigate({ to: "/iniciar-sesion" })}
+            onClick={() => navigate({ to: isDocente ? "/docente" : "/iniciar-sesion" })}
             className="group flex w-full items-center gap-3 rounded-xl border border-border bg-card p-4 text-left shadow-sm transition hover:border-primary hover:shadow-md"
           >
             <span className="grid size-11 place-items-center rounded-lg bg-primary/10 text-primary">
