@@ -66,9 +66,14 @@ export interface CompresionPoint {
   cm: number;
 }
 
+export type TendenciaBateria = "cargando" | "descargando" | "estable";
+
 export interface PepeState {
   status: ConnStatus;
   bateria: number | null;
+  tendencia: TendenciaBateria;
+  tasaPctPorMin: number;
+  minutosRestantesEstimados: number;
   estudiante: string;
   duracionPrueba: number;
   lecturaMaximaCMPresion: number;
@@ -97,7 +102,7 @@ interface PepeContextValue {
   setParams: (p: Params) => void;
   connect: (url?: string) => void;
   disconnect: () => void;
-  sendStart: (estudiante: string, duracionPrueba: number) => void;
+  sendStart: (estudiante: string, duracionPrueba: number) => boolean;
   sendStop: () => void;
   sendReset: () => void;
   isDocente: boolean;
@@ -118,6 +123,9 @@ const PepeContext = createContext<PepeContextValue | null>(null);
 const initialState: PepeState = {
   status: "disconnected",
   bateria: null,
+  tendencia: "estable",
+  tasaPctPorMin: 0,
+  minutosRestantesEstimados: -1,
   estudiante: "",
   duracionPrueba: 300,
   lecturaMaximaCMPresion: 6,
@@ -295,9 +303,18 @@ export function PepeProvider({ children }: { children: ReactNode }) {
 
         }
         case "cargaBateria": {
+          const tRaw = String(msg.tendencia ?? "estable");
+          const tendencia: TendenciaBateria =
+            tRaw === "cargando" || tRaw === "descargando" ? tRaw : "estable";
           setState((s) => ({
             ...s,
             bateria: Number(msg.porcentajeCargaBatt) || 0,
+            tendencia,
+            tasaPctPorMin: Number(msg.tasaPctPorMin) || 0,
+            minutosRestantesEstimados:
+              msg.minutosRestantesEstimados === undefined
+                ? -1
+                : Number(msg.minutosRestantesEstimados),
           }));
           break;
         }
@@ -313,8 +330,14 @@ export function PepeProvider({ children }: { children: ReactNode }) {
       return;
     }
     const target = url ?? params.wsUrl;
-    if (wsRef.current && wsRef.current.readyState <= 1) {
-      wsRef.current.close();
+    const prev = wsRef.current;
+    if (prev) {
+      prev.onopen = null;
+      prev.onclose = null;
+      prev.onerror = null;
+      prev.onmessage = null;
+      if (prev.readyState <= 1) prev.close();
+      wsRef.current = null;
     }
     setState((s) => ({ ...s, status: "connecting" }));
     log("info", `Conectando a ${target}`);
@@ -327,6 +350,8 @@ export function PepeProvider({ children }: { children: ReactNode }) {
         log("info", "WebSocket conectado");
       };
       ws.onclose = () => {
+        if (wsRef.current !== ws) return;
+        wsRef.current = null;
         setState((s) => ({ ...s, status: "disconnected" }));
         log("warn", "WebSocket cerrado");
         if (reconnectRef.current) window.clearTimeout(reconnectRef.current);
@@ -389,14 +414,23 @@ export function PepeProvider({ children }: { children: ReactNode }) {
 
     if (simulating) {
       startSimulation(estudiante, duracionPrueba);
-      return;
+      return true;
     }
-    send({
+    const ok = send({
       type: "envioComandoaESP",
       estadoConexion: "start",
       estudiante,
       duracionPrueba,
     });
+    if (!ok) {
+      // El socket quedó cerrado (típico luego de detener una práctica):
+      // revertimos el estado y forzamos la reconexión en vez de dejar
+      // la sesión "activa" para siempre.
+      log("warn", "No se pudo enviar start: WebSocket no disponible, reconectando");
+      setState((s) => ({ ...s, sesionActiva: false, status: "disconnected" }));
+      connect(params.wsUrl);
+    }
+    return ok;
   };
   const sendStop = () => {
     if (simulating) {
@@ -462,7 +496,14 @@ export function PepeProvider({ children }: { children: ReactNode }) {
       if (simRef.current) stopSimulation();
 
       setSimulating(true);
-      setState((s) => ({ ...s, status: "connected", bateria: 87 }));
+      setState((s) => ({
+        ...s,
+        status: "connected",
+        bateria: 87,
+        tendencia: "descargando",
+        tasaPctPorMin: 0.4,
+        minutosRestantesEstimados: 120,
+      }));
       log("info", `Iniciando simulación (${estudiante}, ${duracion}s)`);
 
       handleMessage({
@@ -579,9 +620,9 @@ export function usePepe() {
 export function useAutoConnect() {
   const { state, connect, params, simulating } = usePepe();
   useEffect(() => {
-    if (!simulating && state.status === "disconnected") {
+    if (!simulating && (state.status === "disconnected" || state.status === "error")) {
       connect(params.wsUrl);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [simulating]);
+  }, [simulating, state.status]);
 }
