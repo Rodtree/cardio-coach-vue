@@ -1,4 +1,4 @@
-import { forwardRef, useImperativeHandle, useMemo, useRef, useState } from "react";
+import { forwardRef, useEffect, useImperativeHandle, useMemo, useRef, useState } from "react";
 import { Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePepe, type EstadisticasVentilacion } from "@/lib/pepe-store";
@@ -98,8 +98,14 @@ export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
     const pepe = usePepe();
     const stats = data.estadisticasFinales;
     const codigo = useMemo(() => verificationCode(data), [data]);
-    const fechaLarga = formatFechaLarga(data.fechaISO);
-    const fechaHora = formatFechaHora(data.fechaISO);
+    // Las fechas se formatean con la zona horaria/locale del navegador y, si no
+    // hay fechaISO, dependen de `new Date()` — ambos difieren del render en el
+    // servidor. Se calculan sólo después del montaje para evitar el mismatch
+    // de hidratación (React #418).
+    const [hydrated, setHydrated] = useState(false);
+    useEffect(() => setHydrated(true), []);
+    const fechaLarga = hydrated ? formatFechaLarga(data.fechaISO) : "—";
+    const fechaHora = hydrated ? formatFechaHora(data.fechaISO) : "—";
     const instructor =
       instructorOverride?.trim() || pepe.params.instructor?.trim() || "—";
     const docRef = useRef<HTMLDivElement>(null);

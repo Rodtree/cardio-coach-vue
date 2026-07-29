@@ -2,8 +2,9 @@
 import type jsPDFType from "jspdf";
 
 async function loadLibs() {
+  // html2canvas-pro: misma API que html2canvas pero soporta oklch()/lab()/color()
   const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-    import("html2canvas"),
+    import("html2canvas-pro"),
     import("jspdf"),
   ]);
   return { html2canvas, jsPDF };
