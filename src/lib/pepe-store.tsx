@@ -135,7 +135,7 @@ interface PepeContextValue {
   setParams: (p: Params) => void;
   connect: (url?: string) => void;
   disconnect: () => void;
-  sendStart: (estudiante: string, duracionPrueba: number) => boolean;
+  sendStart: (estudiante: string, duracionPrueba: number) => StartResult;
   sendStop: () => void;
   sendReset: () => void;
   isDocente: boolean;
