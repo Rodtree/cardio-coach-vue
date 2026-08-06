@@ -106,8 +106,14 @@ export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
     useEffect(() => setHydrated(true), []);
     const fechaLarga = hydrated ? formatFechaLarga(data.fechaISO) : "—";
     const fechaHora = hydrated ? formatFechaHora(data.fechaISO) : "—";
-    const instructor =
-      instructorOverride?.trim() || pepe.params.instructor?.trim() || "—";
+    const instructorRaw =
+      instructorOverride?.trim() || pepe.params.instructor?.trim() || "";
+    const instructor = instructorRaw || "Sin asignar";
+    const alumnoRaw = data.estudiante?.trim() || "";
+    const alumno = alumnoRaw || "Sin asignar";
+    const incompleto = !alumnoRaw || !instructorRaw;
+    const sinCompresiones = data.totalCompresiones <= 0;
+    const ventilaciones = stats?.totalVentilaciones ?? data.totalVentilacionesLocal;
     const docRef = useRef<HTMLDivElement>(null);
     const [downloading, setDownloading] = useState(false);
 
@@ -124,7 +130,7 @@ export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
     );
 
     const download = async () => {
-      if (!docRef.current) return;
+      if (!docRef.current || incompleto) return;
       setDownloading(true);
       try {
         const blob = await capturePdfBlob(docRef.current);
@@ -139,9 +145,20 @@ export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
         {!hideChrome && (
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs text-muted-foreground">
-              Documento oficial de práctica · ISPM N°1
+              {incompleto
+                ? "Completá alumno/a e instructor para habilitar la descarga"
+                : "Documento oficial de práctica · ISPM N°1"}
             </p>
-            <Button onClick={download} disabled={downloading} size="sm">
+            <Button
+              onClick={download}
+              disabled={downloading || incompleto}
+              size="sm"
+              title={
+                incompleto
+                  ? "Faltan datos de alumno/a o instructor"
+                  : undefined
+              }
+            >
               {downloading ? (
                 <Loader2 className="mr-2 size-4 animate-spin" />
               ) : (
@@ -165,7 +182,7 @@ export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
           borderBottom: `3px solid ${ROJO}`,
         }}
       >
-        {preview && (
+        {(preview || incompleto) && (
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
@@ -176,14 +193,14 @@ export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
                 fontSize: 96,
                 fontWeight: 800,
                 letterSpacing: 8,
-                color: AZUL,
+                color: preview ? AZUL : ROJO,
                 opacity: 0.08,
                 fontFamily:
                   'Georgia, "Times New Roman", ui-serif, Cambria, serif',
                 whiteSpace: "nowrap",
               }}
             >
-              VISTA PREVIA
+              {preview ? "VISTA PREVIA" : "BORRADOR"}
             </span>
           </div>
         )}
@@ -240,7 +257,7 @@ export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
           <section className="mb-6">
             <SectionTitle>Datos de la práctica</SectionTitle>
             <dl className="grid grid-cols-1 gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
-              <Row k="Alumno / Alumna" v={data.estudiante || "—"} />
+              <Row k="Alumno / Alumna" v={alumno} />
               <Row k="Fecha de la sesión" v={fechaLarga} />
               <Row
                 k="Duración configurada"
@@ -257,18 +274,21 @@ export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
               <tbody>
                 <ResultRow
                   label="Compresiones totales"
-                  value={String(data.totalCompresiones)}
+                  value={sinCompresiones ? "Sin datos" : String(data.totalCompresiones)}
                 />
                 <ResultRow
                   label="Ventilaciones totales"
-                  value={String(
-                    stats?.totalVentilaciones ?? data.totalVentilacionesLocal,
-                  )}
+                  value={
+                    !stats && ventilaciones <= 0
+                      ? "Sin datos"
+                      : String(ventilaciones)
+                  }
                 />
                 <ResultRow
                   label="Compresiones en los últimos 30 s"
-                  value={String(data.cuentaPress30s)}
+                  value={sinCompresiones ? "Sin datos" : String(data.cuentaPress30s)}
                 />
+
                 {stats && (
                   <>
                     <ResultRow
