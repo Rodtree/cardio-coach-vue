@@ -106,8 +106,14 @@ export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
     useEffect(() => setHydrated(true), []);
     const fechaLarga = hydrated ? formatFechaLarga(data.fechaISO) : "—";
     const fechaHora = hydrated ? formatFechaHora(data.fechaISO) : "—";
-    const instructor =
-      instructorOverride?.trim() || pepe.params.instructor?.trim() || "—";
+    const instructorRaw =
+      instructorOverride?.trim() || pepe.params.instructor?.trim() || "";
+    const instructor = instructorRaw || "Sin asignar";
+    const alumnoRaw = data.estudiante?.trim() || "";
+    const alumno = alumnoRaw || "Sin asignar";
+    const incompleto = !alumnoRaw || !instructorRaw;
+    const sinCompresiones = data.totalCompresiones <= 0;
+    const ventilaciones = stats?.totalVentilaciones ?? data.totalVentilacionesLocal;
     const docRef = useRef<HTMLDivElement>(null);
     const [downloading, setDownloading] = useState(false);
 
