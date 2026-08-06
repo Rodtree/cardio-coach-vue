@@ -385,7 +385,9 @@ export function PepeProvider({ children }: { children: ReactNode }) {
       ws.onopen = () => {
         setState((s) => ({ ...s, status: "connected" }));
         log("info", "WebSocket conectado");
+        flushPendingStart();
       };
+
       ws.onclose = () => {
         if (wsRef.current !== ws) return;
         wsRef.current = null;
