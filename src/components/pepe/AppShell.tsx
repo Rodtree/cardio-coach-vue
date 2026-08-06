@@ -20,10 +20,10 @@ import type { ReactNode } from "react";
 function StatusPill() {
   const { state } = usePepe();
   const map = {
-    connected: { label: "Conectado", icon: Wifi, cls: "bg-success/15 text-success-foreground border-success/30" },
-    connecting: { label: "Conectando…", icon: Loader2, cls: "bg-warning/15 text-warning-foreground border-warning/30" },
+    connected: { label: "Conectado", icon: Wifi, cls: "bg-success/15 text-success-text border-success/30" },
+    connecting: { label: "Conectando…", icon: Loader2, cls: "bg-warning/15 text-warning-text border-warning/30" },
     disconnected: { label: "Desconectado", icon: WifiOff, cls: "bg-muted text-muted-foreground border-border" },
-    error: { label: "Error de conexión", icon: WifiOff, cls: "bg-destructive/15 text-destructive border-destructive/30" },
+    error: { label: "Error de conexión", icon: WifiOff, cls: "bg-destructive/15 text-destructive-text border-destructive/30" },
   } as const;
   const m = map[state.status];
   const Icon = m.icon;
@@ -57,8 +57,8 @@ function BatteryPill() {
     : b > 30
       ? "text-success"
       : b > 15
-        ? "text-warning-foreground"
-        : "text-destructive";
+        ? "text-warning-text"
+        : "text-destructive-text";
   const mostrarRestante =
     state.tendencia === "descargando" && state.minutosRestantesEstimados > 0;
   const titulo =

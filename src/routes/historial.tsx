@@ -299,7 +299,7 @@ function HistorialPage() {
                             onClick={() => removeEntry(e)}
                             aria-label="Eliminar"
                           >
-                            <Trash2 className="size-4 text-destructive" />
+                            <Trash2 className="size-4 text-destructive-text" />
                           </Button>
                         </div>
                       </td>
