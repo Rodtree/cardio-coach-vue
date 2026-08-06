@@ -43,19 +43,17 @@ function DocentePage() {
       toast.error("Ingresá el nombre del alumno");
       return;
     }
-    // TEMPORAL (diagnóstico bug 2ª práctica)
-    console.log("[PEPE] antes de sendStart:", state.status, state.sesionActiva);
-    if (!simulating && state.status !== "connected") {
-      toast.error("Sin conexión al robot");
-      return;
-    }
-    const ok = sendStart(alumno.trim(), duracion);
-    if (!ok) {
-      toast.error("No se pudo iniciar: reconectando con el robot, probá de nuevo");
+    const res = sendStart(alumno.trim(), duracion);
+    if (res === "queued") {
+      toast.loading("Reconectando con el robot… la práctica arranca al conectar", {
+        id: "pepe-start",
+        duration: 4000,
+      });
       return;
     }
     toast.success(`Sesión iniciada — ${alumno.trim()}`);
   };
+
   const detener = () => {
     sendStop();
     toast.info("Sesión detenida");
