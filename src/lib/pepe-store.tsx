@@ -11,6 +11,9 @@ import {
 
 // ---- Tipos de mensajes del ESP32 ----
 export type ConnStatus = "disconnected" | "connecting" | "connected" | "error";
+/** Resultado de pedir el inicio de una práctica. */
+export type StartResult = "sent" | "queued";
+
 
 export interface DatosMediciones {
   conexion?: string;
