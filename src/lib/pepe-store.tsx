@@ -435,7 +435,21 @@ export function PepeProvider({ children }: { children: ReactNode }) {
     return false;
   };
 
-  const sendStart = (estudiante: string, duracionPrueba: number) => {
+  /** Envía el start pendiente en cuanto la conexión vuelve a abrirse. */
+  function flushPendingStart() {
+    const pending = pendingStartRef.current;
+    if (!pending) return;
+    if (pendingTimeoutRef.current) {
+      window.clearTimeout(pendingTimeoutRef.current);
+      pendingTimeoutRef.current = null;
+    }
+    pendingStartRef.current = null;
+    const ok = send(pending);
+    log(ok ? "info" : "error", ok ? "Start pendiente enviado" : "Start pendiente falló");
+    if (!ok) setState((s) => ({ ...s, sesionActiva: false }));
+  }
+
+  const sendStart = (estudiante: string, duracionPrueba: number): StartResult => {
     startTsRef.current = Date.now();
     setState((s) => ({
       ...s,
@@ -446,6 +460,7 @@ export function PepeProvider({ children }: { children: ReactNode }) {
       cuentaPress30s: 0,
       totalVentilacionesLocal: 0,
       estadisticasFinales: null,
+      ultimaPractica: null,
       sesionActiva: true,
       sesionId: `sess-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
       sesionStartISO: new Date().toISOString(),
@@ -453,32 +468,62 @@ export function PepeProvider({ children }: { children: ReactNode }) {
 
     if (simulating) {
       startSimulation(estudiante, duracionPrueba);
-      return true;
+      return "sent";
     }
-    const ok = send({
+    const payload = {
       type: "envioComandoaESP",
       estadoConexion: "start",
       estudiante,
       duracionPrueba,
-    });
-    if (!ok) {
-      // El socket quedó cerrado (típico luego de detener una práctica):
-      // revertimos el estado y forzamos la reconexión en vez de dejar
-      // la sesión "activa" para siempre.
-      log("warn", "No se pudo enviar start: WebSocket no disponible, reconectando");
-      setState((s) => ({ ...s, sesionActiva: false, status: "disconnected" }));
-      connect(params.wsUrl);
-    }
-    return ok;
+    };
+    if (send(payload)) return "sent";
+
+    // El socket quedó cerrado (típico luego de detener una práctica):
+    // encolamos el start y forzamos la reconexión inmediata.
+    log("warn", "WebSocket no disponible: start encolado, reconectando");
+    pendingStartRef.current = payload;
+    if (pendingTimeoutRef.current) window.clearTimeout(pendingTimeoutRef.current);
+    pendingTimeoutRef.current = window.setTimeout(() => {
+      if (!pendingStartRef.current) return;
+      pendingStartRef.current = null;
+      pendingTimeoutRef.current = null;
+      log("error", "No se pudo reconectar para iniciar la práctica");
+      setState((s) => ({ ...s, sesionActiva: false }));
+    }, 12000);
+    reconnectNow();
+    return "queued";
   };
+
+  /** Reconecta ya mismo, cancelando el timer de reintento de 4 s. */
+  const reconnectNow = () => {
+    if (reconnectRef.current) {
+      window.clearTimeout(reconnectRef.current);
+      reconnectRef.current = null;
+    }
+    const ws = wsRef.current;
+    if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+      if (ws.readyState === WebSocket.OPEN) flushPendingStart();
+      return;
+    }
+    connect(params.wsUrl);
+  };
+
   const sendStop = () => {
     if (simulating) {
       stopSimulation();
       return;
     }
     send({ type: "envioComandoaESP", estadoConexion: "stop" });
-    setState((s) => ({ ...s, sesionActiva: false }));
+    setState((s) => ({
+      ...s,
+      sesionActiva: false,
+      ultimaPractica: snapshotDe(s),
+    }));
+    // El ESP32 suele cerrar el socket al detener: reconectamos enseguida
+    // en vez de esperar el reintento automático de 4 s.
+    window.setTimeout(() => reconnectNow(), 300);
   };
+
   const sendReset = () => {
     if (!simulating) send({ type: "envioComandoaESP", estadoConexion: "reset" });
     setState((s) => ({
