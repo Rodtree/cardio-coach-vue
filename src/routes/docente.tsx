@@ -24,7 +24,7 @@ export const Route = createFileRoute("/docente")({
 
 function DocentePage() {
   const navigate = useNavigate();
-  const { state, params, isDocente, simulating, sendStart, sendStop, sendReset } = usePepe();
+  const { state, params, isDocente, sendStart, sendStop, sendReset } = usePepe();
   useAutoConnect();
 
   const [alumno, setAlumno] = useState("");
