@@ -26,9 +26,9 @@ export function DepthGauge() {
   const color = inRange
     ? "text-success"
     : tooDeep
-      ? "text-destructive"
+      ? "text-destructive-text"
       : tooShallow
-        ? "text-warning-foreground"
+        ? "text-warning-text"
         : "text-muted-foreground";
 
   return (

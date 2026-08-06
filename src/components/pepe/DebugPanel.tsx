@@ -131,8 +131,8 @@ export function DebugPanel() {
               <span
                 className={cn(
                   "shrink-0 uppercase w-10",
-                  l.level === "error" && "text-destructive",
-                  l.level === "warn" && "text-warning-foreground",
+                  l.level === "error" && "text-destructive-text",
+                  l.level === "warn" && "text-warning-text",
                   l.level === "event" && "text-primary",
                   l.level === "info" && "text-muted-foreground",
                 )}
