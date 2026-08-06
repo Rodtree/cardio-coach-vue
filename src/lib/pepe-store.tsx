@@ -304,7 +304,9 @@ export function PepeProvider({ children }: { children: ReactNode }) {
             ...s,
             estadisticasFinales: stats,
             sesionActiva: false,
+            ultimaPractica: snapshotDe(s, stats),
           }));
+
           break;
         }
         case "datosIniciales": {
