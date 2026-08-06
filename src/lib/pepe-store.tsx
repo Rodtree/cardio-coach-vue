@@ -11,6 +11,9 @@ import {
 
 // ---- Tipos de mensajes del ESP32 ----
 export type ConnStatus = "disconnected" | "connecting" | "connected" | "error";
+/** Resultado de pedir el inicio de una práctica. */
+export type StartResult = "sent" | "queued";
+
 
 export interface DatosMediciones {
   conexion?: string;
@@ -68,6 +71,19 @@ export interface CompresionPoint {
 
 export type TendenciaBateria = "cargando" | "descargando" | "estable";
 
+/** Snapshot inmutable de la última práctica finalizada (para el informe). */
+export interface PracticaSnapshot {
+  sesionId: string | null;
+  sesionStartISO: string | null;
+  finISO: string;
+  estudiante: string;
+  duracionPrueba: number;
+  totalCompresiones: number;
+  totalVentilacionesLocal: number;
+  cuentaPress30s: number;
+  estadisticasFinales: EstadisticasVentilacion | null;
+}
+
 export interface PepeState {
   status: ConnStatus;
   bateria: number | null;
@@ -87,7 +103,27 @@ export interface PepeState {
   sesionActiva: boolean;
   sesionId: string | null;
   sesionStartISO: string | null;
+  /** Congelado al detener la sesión; sólo se reemplaza al iniciar una nueva. */
+  ultimaPractica: PracticaSnapshot | null;
 }
+
+function snapshotDe(
+  s: PepeState,
+  stats?: EstadisticasVentilacion | null,
+): PracticaSnapshot {
+  return {
+    sesionId: s.sesionId,
+    sesionStartISO: s.sesionStartISO,
+    finISO: new Date().toISOString(),
+    estudiante: s.estudiante,
+    duracionPrueba: s.duracionPrueba,
+    totalCompresiones: s.totalCompresiones,
+    totalVentilacionesLocal: s.totalVentilacionesLocal,
+    cuentaPress30s: s.cuentaPress30s,
+    estadisticasFinales: stats ?? s.estadisticasFinales,
+  };
+}
+
 
 
 export interface LogEntry {
@@ -102,7 +138,8 @@ interface PepeContextValue {
   setParams: (p: Params) => void;
   connect: (url?: string) => void;
   disconnect: () => void;
-  sendStart: (estudiante: string, duracionPrueba: number) => boolean;
+
+  sendStart: (estudiante: string, duracionPrueba: number) => StartResult;
   sendStop: () => void;
   sendReset: () => void;
   isDocente: boolean;
@@ -139,6 +176,8 @@ const initialState: PepeState = {
   sesionActiva: false,
   sesionId: null,
   sesionStartISO: null,
+  ultimaPractica: null,
+
 
 };
 
@@ -163,6 +202,9 @@ export function PepeProvider({ children }: { children: ReactNode }) {
   const wsRef = useRef<WebSocket | null>(null);
   const startTsRef = useRef<number>(Date.now());
   const reconnectRef = useRef<number | null>(null);
+  const pendingStartRef = useRef<object | null>(null);
+  const pendingTimeoutRef = useRef<number | null>(null);
+
   const simRef = useRef<{
     tickComp?: number;
     tickVent?: number;
@@ -269,7 +311,9 @@ export function PepeProvider({ children }: { children: ReactNode }) {
             ...s,
             estadisticasFinales: stats,
             sesionActiva: false,
+            ultimaPractica: snapshotDe(s, stats),
           }));
+
           break;
         }
         case "datosIniciales": {
@@ -348,7 +392,9 @@ export function PepeProvider({ children }: { children: ReactNode }) {
       ws.onopen = () => {
         setState((s) => ({ ...s, status: "connected" }));
         log("info", "WebSocket conectado");
+        flushPendingStart();
       };
+
       ws.onclose = () => {
         if (wsRef.current !== ws) return;
         wsRef.current = null;
@@ -396,7 +442,21 @@ export function PepeProvider({ children }: { children: ReactNode }) {
     return false;
   };
 
-  const sendStart = (estudiante: string, duracionPrueba: number) => {
+  /** Envía el start pendiente en cuanto la conexión vuelve a abrirse. */
+  function flushPendingStart() {
+    const pending = pendingStartRef.current;
+    if (!pending) return;
+    if (pendingTimeoutRef.current) {
+      window.clearTimeout(pendingTimeoutRef.current);
+      pendingTimeoutRef.current = null;
+    }
+    pendingStartRef.current = null;
+    const ok = send(pending);
+    log(ok ? "info" : "error", ok ? "Start pendiente enviado" : "Start pendiente falló");
+    if (!ok) setState((s) => ({ ...s, sesionActiva: false }));
+  }
+
+  const sendStart = (estudiante: string, duracionPrueba: number): StartResult => {
     startTsRef.current = Date.now();
     setState((s) => ({
       ...s,
@@ -407,6 +467,7 @@ export function PepeProvider({ children }: { children: ReactNode }) {
       cuentaPress30s: 0,
       totalVentilacionesLocal: 0,
       estadisticasFinales: null,
+      ultimaPractica: null,
       sesionActiva: true,
       sesionId: `sess-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`,
       sesionStartISO: new Date().toISOString(),
@@ -414,32 +475,62 @@ export function PepeProvider({ children }: { children: ReactNode }) {
 
     if (simulating) {
       startSimulation(estudiante, duracionPrueba);
-      return true;
+      return "sent";
     }
-    const ok = send({
+    const payload = {
       type: "envioComandoaESP",
       estadoConexion: "start",
       estudiante,
       duracionPrueba,
-    });
-    if (!ok) {
-      // El socket quedó cerrado (típico luego de detener una práctica):
-      // revertimos el estado y forzamos la reconexión en vez de dejar
-      // la sesión "activa" para siempre.
-      log("warn", "No se pudo enviar start: WebSocket no disponible, reconectando");
-      setState((s) => ({ ...s, sesionActiva: false, status: "disconnected" }));
-      connect(params.wsUrl);
-    }
-    return ok;
+    };
+    if (send(payload)) return "sent";
+
+    // El socket quedó cerrado (típico luego de detener una práctica):
+    // encolamos el start y forzamos la reconexión inmediata.
+    log("warn", "WebSocket no disponible: start encolado, reconectando");
+    pendingStartRef.current = payload;
+    if (pendingTimeoutRef.current) window.clearTimeout(pendingTimeoutRef.current);
+    pendingTimeoutRef.current = window.setTimeout(() => {
+      if (!pendingStartRef.current) return;
+      pendingStartRef.current = null;
+      pendingTimeoutRef.current = null;
+      log("error", "No se pudo reconectar para iniciar la práctica");
+      setState((s) => ({ ...s, sesionActiva: false }));
+    }, 12000);
+    reconnectNow();
+    return "queued";
   };
+
+  /** Reconecta ya mismo, cancelando el timer de reintento de 4 s. */
+  const reconnectNow = () => {
+    if (reconnectRef.current) {
+      window.clearTimeout(reconnectRef.current);
+      reconnectRef.current = null;
+    }
+    const ws = wsRef.current;
+    if (ws && (ws.readyState === WebSocket.OPEN || ws.readyState === WebSocket.CONNECTING)) {
+      if (ws.readyState === WebSocket.OPEN) flushPendingStart();
+      return;
+    }
+    connect(params.wsUrl);
+  };
+
   const sendStop = () => {
     if (simulating) {
       stopSimulation();
       return;
     }
     send({ type: "envioComandoaESP", estadoConexion: "stop" });
-    setState((s) => ({ ...s, sesionActiva: false }));
+    setState((s) => ({
+      ...s,
+      sesionActiva: false,
+      ultimaPractica: snapshotDe(s),
+    }));
+    // El ESP32 suele cerrar el socket al detener: reconectamos enseguida
+    // en vez de esperar el reintento automático de 4 s.
+    window.setTimeout(() => reconnectNow(), 300);
   };
+
   const sendReset = () => {
     if (!simulating) send({ type: "envioComandoaESP", estadoConexion: "reset" });
     setState((s) => ({
