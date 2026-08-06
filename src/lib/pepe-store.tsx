@@ -68,6 +68,19 @@ export interface CompresionPoint {
 
 export type TendenciaBateria = "cargando" | "descargando" | "estable";
 
+/** Snapshot inmutable de la última práctica finalizada (para el informe). */
+export interface PracticaSnapshot {
+  sesionId: string | null;
+  sesionStartISO: string | null;
+  finISO: string;
+  estudiante: string;
+  duracionPrueba: number;
+  totalCompresiones: number;
+  totalVentilacionesLocal: number;
+  cuentaPress30s: number;
+  estadisticasFinales: EstadisticasVentilacion | null;
+}
+
 export interface PepeState {
   status: ConnStatus;
   bateria: number | null;
@@ -87,7 +100,27 @@ export interface PepeState {
   sesionActiva: boolean;
   sesionId: string | null;
   sesionStartISO: string | null;
+  /** Congelado al detener la sesión; sólo se reemplaza al iniciar una nueva. */
+  ultimaPractica: PracticaSnapshot | null;
 }
+
+function snapshotDe(
+  s: PepeState,
+  stats?: EstadisticasVentilacion | null,
+): PracticaSnapshot {
+  return {
+    sesionId: s.sesionId,
+    sesionStartISO: s.sesionStartISO,
+    finISO: new Date().toISOString(),
+    estudiante: s.estudiante,
+    duracionPrueba: s.duracionPrueba,
+    totalCompresiones: s.totalCompresiones,
+    totalVentilacionesLocal: s.totalVentilacionesLocal,
+    cuentaPress30s: s.cuentaPress30s,
+    estadisticasFinales: stats ?? s.estadisticasFinales,
+  };
+}
+
 
 
 export interface LogEntry {
