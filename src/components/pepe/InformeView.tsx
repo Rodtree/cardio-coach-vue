@@ -130,7 +130,7 @@ export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
     );
 
     const download = async () => {
-      if (!docRef.current) return;
+      if (!docRef.current || incompleto) return;
       setDownloading(true);
       try {
         const blob = await capturePdfBlob(docRef.current);
@@ -182,7 +182,7 @@ export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
           borderBottom: `3px solid ${ROJO}`,
         }}
       >
-        {preview && (
+        {(preview || incompleto) && (
           <div
             aria-hidden
             className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
@@ -193,14 +193,14 @@ export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
                 fontSize: 96,
                 fontWeight: 800,
                 letterSpacing: 8,
-                color: AZUL,
+                color: preview ? AZUL : ROJO,
                 opacity: 0.08,
                 fontFamily:
                   'Georgia, "Times New Roman", ui-serif, Cambria, serif',
                 whiteSpace: "nowrap",
               }}
             >
-              VISTA PREVIA
+              {preview ? "VISTA PREVIA" : "BORRADOR"}
             </span>
           </div>
         )}
