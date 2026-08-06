@@ -172,6 +172,8 @@ const initialState: PepeState = {
   sesionActiva: false,
   sesionId: null,
   sesionStartISO: null,
+  ultimaPractica: null,
+
 
 };
 
