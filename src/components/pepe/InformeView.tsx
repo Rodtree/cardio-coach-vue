@@ -145,9 +145,20 @@ export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
         {!hideChrome && (
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <p className="text-xs text-muted-foreground">
-              Documento oficial de práctica · ISPM N°1
+              {incompleto
+                ? "Completá alumno/a e instructor para habilitar la descarga"
+                : "Documento oficial de práctica · ISPM N°1"}
             </p>
-            <Button onClick={download} disabled={downloading} size="sm">
+            <Button
+              onClick={download}
+              disabled={downloading || incompleto}
+              size="sm"
+              title={
+                incompleto
+                  ? "Faltan datos de alumno/a o instructor"
+                  : undefined
+              }
+            >
               {downloading ? (
                 <Loader2 className="mr-2 size-4 animate-spin" />
               ) : (
