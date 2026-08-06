@@ -257,7 +257,7 @@ export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
           <section className="mb-6">
             <SectionTitle>Datos de la práctica</SectionTitle>
             <dl className="grid grid-cols-1 gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
-              <Row k="Alumno / Alumna" v={data.estudiante || "—"} />
+              <Row k="Alumno / Alumna" v={alumno} />
               <Row k="Fecha de la sesión" v={fechaLarga} />
               <Row
                 k="Duración configurada"
@@ -274,18 +274,21 @@ export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
               <tbody>
                 <ResultRow
                   label="Compresiones totales"
-                  value={String(data.totalCompresiones)}
+                  value={sinCompresiones ? "Sin datos" : String(data.totalCompresiones)}
                 />
                 <ResultRow
                   label="Ventilaciones totales"
-                  value={String(
-                    stats?.totalVentilaciones ?? data.totalVentilacionesLocal,
-                  )}
+                  value={
+                    !stats && ventilaciones <= 0
+                      ? "Sin datos"
+                      : String(ventilaciones)
+                  }
                 />
                 <ResultRow
                   label="Compresiones en los últimos 30 s"
-                  value={String(data.cuentaPress30s)}
+                  value={sinCompresiones ? "Sin datos" : String(data.cuentaPress30s)}
                 />
+
                 {stats && (
                   <>
                     <ResultRow
