@@ -198,6 +198,9 @@ export function PepeProvider({ children }: { children: ReactNode }) {
   const wsRef = useRef<WebSocket | null>(null);
   const startTsRef = useRef<number>(Date.now());
   const reconnectRef = useRef<number | null>(null);
+  const pendingStartRef = useRef<object | null>(null);
+  const pendingTimeoutRef = useRef<number | null>(null);
+
   const simRef = useRef<{
     tickComp?: number;
     tickVent?: number;
