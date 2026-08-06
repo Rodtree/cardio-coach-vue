@@ -17,6 +17,20 @@ export function LiveChart({ height = 240 }: { height?: number }) {
     cm: p.cm,
   }));
   const max = Math.max(state.lecturaMaximaCMPresion, params.objetivoProfundidadMax + 2);
+
+  if (data.length === 0) {
+    return (
+      <div
+        className="flex w-full items-center justify-center rounded-md border border-dashed border-border bg-muted/30 px-6 text-center"
+        style={{ height }}
+      >
+        <p className="text-sm text-muted-foreground">
+          Iniciá la práctica para ver tu curva en tiempo real
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="w-full">
       <ResponsiveContainer width="100%" height={height}>

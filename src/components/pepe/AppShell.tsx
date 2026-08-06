@@ -73,6 +73,7 @@ function BatteryPill() {
       className={cn("inline-flex items-center gap-1 text-xs font-medium", cls)}
     >
       <Icon className={cn("size-4", state.tendencia === "estable" && "opacity-80")} />
+      <span className="hidden sm:inline text-muted-foreground">Batería</span>
       {Math.round(b)}%
       {mostrarRestante && (
         <span className="text-muted-foreground">
