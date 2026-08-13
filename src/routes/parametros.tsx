@@ -72,54 +72,35 @@ function ParamsPage() {
           label="Duración por defecto (segundos)"
           hint="Se aplica cuando iniciás una sesión nueva"
         >
-          <Input
-            type="number"
+          <NumericField
+            value={form.duracionPrueba}
+            onChange={(v) => setForm({ ...form, duracionPrueba: v })}
             min={30}
             max={1800}
-            value={form.duracionPrueba}
-            onChange={(e) =>
-              setForm({ ...form, duracionPrueba: Number(e.target.value) || 0 })
-            }
           />
         </Field>
         <Field label="Compresiones objetivo por minuto" hint="Referencia guía RCP adulto ≈ 100–120">
-          <Input
-            type="number"
+          <NumericField
+            value={form.objetivoCompresionesPorMin}
+            onChange={(v) => setForm({ ...form, objetivoCompresionesPorMin: v })}
             min={60}
             max={160}
-            value={form.objetivoCompresionesPorMin}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                objetivoCompresionesPorMin: Number(e.target.value) || 0,
-              })
-            }
           />
         </Field>
-        <Field label="Profundidad mínima (cm)">
-          <Input
-            type="number"
-            step="0.1"
+        <Field label="Profundidad mínima (cm)" hint="Mínimo lógico 1 cm">
+          <NumericField
             value={form.objetivoProfundidadMin}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                objetivoProfundidadMin: Number(e.target.value) || 0,
-              })
-            }
+            onChange={(v) => setForm({ ...form, objetivoProfundidadMin: v })}
+            min={1}
+            step="0.1"
           />
         </Field>
-        <Field label="Profundidad máxima (cm)">
-          <Input
-            type="number"
-            step="0.1"
+        <Field label="Profundidad máxima (cm)" hint="Mínimo lógico 1 cm">
+          <NumericField
             value={form.objetivoProfundidadMax}
-            onChange={(e) =>
-              setForm({
-                ...form,
-                objetivoProfundidadMax: Number(e.target.value) || 0,
-              })
-            }
+            onChange={(v) => setForm({ ...form, objetivoProfundidadMax: v })}
+            min={1}
+            step="0.1"
           />
         </Field>
         <div className="sm:col-span-2">
