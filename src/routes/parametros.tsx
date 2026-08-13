@@ -198,6 +198,59 @@ function ParamsPage() {
 }
 
 
+function NumericField({
+  value,
+  onChange,
+  min,
+  max,
+  step,
+}: {
+  value: number;
+  onChange: (value: number) => void;
+  min?: number;
+  max?: number;
+  step?: string;
+}) {
+  const [raw, setRaw] = useState(String(value));
+
+  useEffect(() => {
+    setRaw(String(value));
+  }, [value]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const next = e.target.value;
+    setRaw(next);
+    if (next === "" || next === "-") return;
+    const num = Number(next);
+    if (!Number.isNaN(num)) {
+      onChange(num);
+    }
+  };
+
+  const handleBlur = () => {
+    let num = Number(raw);
+    if (raw === "" || raw === "-" || Number.isNaN(num)) {
+      num = min ?? 0;
+    }
+    if (min !== undefined && num < min) num = min;
+    if (max !== undefined && num > max) num = max;
+    onChange(num);
+    setRaw(String(num));
+  };
+
+  return (
+    <Input
+      type="number"
+      min={min}
+      max={max}
+      step={step}
+      value={raw}
+      onChange={handleChange}
+      onBlur={handleBlur}
+    />
+  );
+}
+
 function Field({
   label,
   hint,
