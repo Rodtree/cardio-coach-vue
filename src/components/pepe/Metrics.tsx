@@ -20,7 +20,7 @@ export function MetricCard({
     default: "",
     success: "border-success/40 bg-success/5",
     destructive: "border-destructive/40 bg-destructive/5",
-    primary: "border-primary/40 bg-primary/5",
+    primary: "border-primary/40 bg-card",
   }[tone];
   return (
     <div
