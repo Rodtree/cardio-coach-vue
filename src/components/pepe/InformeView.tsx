@@ -3,7 +3,6 @@ import { Download, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePepe, type EstadisticasVentilacion } from "@/lib/pepe-store";
 import { capturePdfBlob, downloadBlob, safeFilenamePart } from "@/lib/pdf-export";
-import ispmLogoUrl from "@/assets/ispm-logo.png";
 
 
 export interface InformeData {
@@ -33,7 +32,6 @@ export const MOCK_INFORME: InformeData = {
   },
 };
 
-// Colores institucionales ISPM Nro. 1
 const AZUL = "#283F9F";
 const ROJO = "#E63235";
 
@@ -147,7 +145,7 @@ export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
             <p className="text-xs text-muted-foreground">
               {incompleto
                 ? "Completá alumno/a e instructor para habilitar la descarga"
-                : "Documento oficial de práctica · ISPM N°1"}
+                : "Documento de práctica · ISPM N°1"}
             </p>
             <Button
               onClick={download}
@@ -169,221 +167,161 @@ export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
           </div>
         )}
 
-
-      <div
-        ref={docRef}
-        className="relative mx-auto overflow-hidden rounded-md bg-white text-neutral-900 shadow-sm"
-        style={{
-          width: "100%",
-          maxWidth: 820,
-          fontFamily:
-            'Georgia, "Times New Roman", ui-serif, Cambria, "Liberation Serif", serif',
-          borderTop: `6px solid ${AZUL}`,
-          borderBottom: `3px solid ${ROJO}`,
-        }}
-      >
-        {(preview || incompleto) && (
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
-          >
-            <span
-              style={{
-                transform: "rotate(-24deg)",
-                fontSize: 96,
-                fontWeight: 800,
-                letterSpacing: 8,
-                color: preview ? AZUL : ROJO,
-                opacity: 0.08,
-                fontFamily:
-                  'Georgia, "Times New Roman", ui-serif, Cambria, serif',
-                whiteSpace: "nowrap",
-              }}
+        <div
+          ref={docRef}
+          className="relative mx-auto overflow-hidden rounded-md bg-white text-neutral-900 shadow-sm"
+          style={{ width: "100%", maxWidth: 820 }}
+        >
+          {(preview || incompleto) && (
+            <div
+              aria-hidden
+              className="pointer-events-none absolute inset-0 z-10 flex items-center justify-center"
             >
-              {preview ? "VISTA PREVIA" : "BORRADOR"}
-            </span>
-          </div>
-        )}
-
-        <div className="relative z-20 p-8 sm:p-10">
-          {/* Encabezado institucional */}
-          <header
-            className="flex items-center gap-5 pb-5"
-            style={{ borderBottom: `2px solid ${AZUL}` }}
-          >
-            <img
-              src={ispmLogoUrl}
-              alt="Escudo Instituto Superior Politécnico Misiones N°1"
-              crossOrigin="anonymous"
-              style={{ width: 84, height: 84, objectFit: "contain" }}
-            />
-            <div className="min-w-0 flex-1">
-              <p
-                className="text-[11px] uppercase tracking-[0.18em]"
-                style={{ color: ROJO, fontWeight: 700 }}
+              <span
+                style={{
+                  transform: "rotate(-24deg)",
+                  fontSize: 96,
+                  fontWeight: 800,
+                  letterSpacing: 8,
+                  color: preview ? AZUL : ROJO,
+                  opacity: 0.08,
+                  whiteSpace: "nowrap",
+                }}
               >
+                {preview ? "VISTA PREVIA" : "BORRADOR"}
+              </span>
+            </div>
+          )}
+
+          <div className="relative z-20 p-8 sm:p-10">
+            {/* Encabezado simple */}
+            <header className="border-b border-neutral-200 pb-4">
+              <p className="text-xs uppercase tracking-wider text-neutral-500">
                 Instituto Superior Politécnico Misiones N°1
               </p>
-              <p
-                className="mt-0.5 text-lg font-bold leading-tight"
-                style={{ color: AZUL }}
-              >
-                Tecnicatura Superior en Automatización y Robótica
-              </p>
-              <p className="mt-0.5 text-xs italic text-neutral-600">
+              <h1 className="mt-1 text-xl font-semibold text-neutral-900">
+                Informe de Práctica de RCP
+              </h1>
+              <p className="text-xs text-neutral-500">
                 Sistema PEPE — Maniquí robótico de práctica de RCP
               </p>
-            </div>
-          </header>
+            </header>
 
-          {/* Título del documento */}
-          <div className="py-6 text-center">
-            <h2
-              className="text-2xl font-bold uppercase tracking-wider"
-              style={{ color: AZUL }}
-            >
-              Constancia de Práctica
-            </h2>
-            <p
-              className="mx-auto mt-1 h-[3px] w-24"
-              style={{ background: ROJO }}
-            />
-            <p className="mt-3 text-sm text-neutral-600">
-              Registro interno de sesión de Reanimación Cardiopulmonar
-            </p>
-          </div>
-
-          {/* Datos del alumno */}
-          <section className="mb-6">
-            <SectionTitle>Datos de la práctica</SectionTitle>
-            <dl className="grid grid-cols-1 gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
-              <Row k="Alumno / Alumna" v={alumno} />
-              <Row k="Fecha de la sesión" v={fechaLarga} />
-              <Row
-                k="Duración configurada"
-                v={`${data.duracionPrueba} segundos`}
-              />
-              <Row k="Instructor responsable" v={instructor} />
-            </dl>
-          </section>
-
-          {/* Resultados */}
-          <section className="mb-6">
-            <SectionTitle>Resultados registrados</SectionTitle>
-            <table className="w-full text-sm">
-              <tbody>
-                <ResultRow
-                  label="Compresiones totales"
-                  value={sinCompresiones ? "Sin datos" : String(data.totalCompresiones)}
-                />
-                <ResultRow
-                  label="Ventilaciones totales"
-                  value={
-                    !stats && ventilaciones <= 0
-                      ? "Sin datos"
-                      : String(ventilaciones)
-                  }
-                />
-                <ResultRow
-                  label="Compresiones en los últimos 30 s"
-                  value={sinCompresiones ? "Sin datos" : String(data.cuentaPress30s)}
-                />
-
-                {stats && (
-                  <>
-                    <ResultRow
-                      label="Tiempo promedio entre ventilaciones"
-                      value={`${stats.tiempoPromedioEntreVentilaciones.toFixed(2)} s`}
-                    />
-                    <ResultRow
-                      label="Duración promedio de ventilación"
-                      value={`${stats.duracionPromedioVentilaciones.toFixed(0)} ms`}
-                    />
-                    <ResultRow
-                      label="Aire promedio ventilado"
-                      value={`${stats.airePromedioVentilado.toFixed(0)} cm³`}
-                    />
-                  </>
-                )}
-              </tbody>
-            </table>
-            {!stats && (
-              <p className="mt-2 text-xs italic text-neutral-500">
-                Aún no se recibieron las estadísticas finales de ventilación
-                desde el maniquí.
+            {/* Título del documento */}
+            <div className="py-5 text-center">
+              <h2 className="text-2xl font-bold text-neutral-900">
+                Resumen de la sesión
+              </h2>
+              <p className="mt-1 text-sm text-neutral-600">
+                Registro interno de práctica de Reanimación Cardiopulmonar
               </p>
-            )}
-          </section>
-
-          {/* Validación */}
-          <section
-            className="mt-8 rounded-md p-5"
-            style={{
-              border: `1.5px solid ${AZUL}`,
-              background: "#F7F8FC",
-            }}
-          >
-            <SectionTitle>Validación de la práctica</SectionTitle>
-            <div className="grid gap-3 sm:grid-cols-3">
-              <ValField label="Código de verificación">
-                <span
-                  className="font-mono text-lg font-bold tracking-wider"
-                  style={{ color: AZUL }}
-                >
-                  {codigo}
-                </span>
-              </ValField>
-              <ValField label="Fecha y hora">
-                <span className="text-sm">{fechaHora}</span>
-              </ValField>
-              <ValField label="Instructor / Responsable">
-                <span className="text-sm">{instructor}</span>
-              </ValField>
             </div>
 
-            <p className="mt-4 text-[12.5px] leading-relaxed text-neutral-800">
-              Este código certifica que{" "}
-              <strong>{data.estudiante || "el/la alumno/a"}</strong> realizó y
-              completó la práctica de Reanimación Cardiopulmonar (RCP)
-              registrada por el sistema PEPE, en el marco de la Tecnicatura
-              Superior en Automatización y Robótica del Instituto Superior
-              Politécnico Misiones N°1, el {fechaLarga}. Este documento
-              constituye un registro interno de la práctica realizada y no
-              reemplaza certificaciones oficiales de primeros auxilios o RCP.
-            </p>
+            {/* Datos del alumno */}
+            <section className="mb-6">
+              <SectionTitle>Datos de la práctica</SectionTitle>
+              <dl className="grid grid-cols-1 gap-x-8 gap-y-2 text-sm sm:grid-cols-2">
+                <Row k="Alumno / Alumna" v={alumno} />
+                <Row k="Fecha de la sesión" v={fechaLarga} />
+                <Row
+                  k="Duración configurada"
+                  v={`${data.duracionPrueba} segundos`}
+                />
+                <Row k="Instructor responsable" v={instructor} />
+              </dl>
+            </section>
 
-            <div
-              className="mt-5 flex items-end justify-between gap-6 pt-6"
-              style={{ borderTop: `1px dashed ${AZUL}` }}
+            {/* Resultados */}
+            <section className="mb-6">
+              <SectionTitle>Resultados registrados</SectionTitle>
+              <table className="w-full text-sm">
+                <tbody>
+                  <ResultRow
+                    label="Compresiones totales"
+                    value={sinCompresiones ? "Sin datos" : String(data.totalCompresiones)}
+                  />
+                  <ResultRow
+                    label="Ventilaciones totales"
+                    value={
+                      !stats && ventilaciones <= 0
+                        ? "Sin datos"
+                        : String(ventilaciones)
+                    }
+                  />
+                  <ResultRow
+                    label="Compresiones en los últimos 30 s"
+                    value={sinCompresiones ? "Sin datos" : String(data.cuentaPress30s)}
+                  />
+
+                  {stats && (
+                    <>
+                      <ResultRow
+                        label="Tiempo promedio entre ventilaciones"
+                        value={`${stats.tiempoPromedioEntreVentilaciones.toFixed(2)} s`}
+                      />
+                      <ResultRow
+                        label="Duración promedio de ventilación"
+                        value={`${stats.duracionPromedioVentilaciones.toFixed(0)} ms`}
+                      />
+                      <ResultRow
+                        label="Aire promedio ventilado"
+                        value={`${stats.airePromedioVentilado.toFixed(0)} cm³`}
+                      />
+                    </>
+                  )}
+                </tbody>
+              </table>
+              {!stats && (
+                <p className="mt-2 text-xs italic text-neutral-500">
+                  Aún no se recibieron las estadísticas finales de ventilación
+                  desde el maniquí.
+                </p>
+              )}
+            </section>
+
+            {/* Validación */}
+            <section
+              className="mt-8 rounded-md border border-neutral-200 bg-neutral-50 p-5"
             >
-              <div className="flex-1">
-                <div
-                  style={{ borderTop: `1px solid #111` }}
-                  className="mt-8 pt-1 text-center text-[11px] uppercase tracking-wider text-neutral-600"
-                >
-                  Firma del instructor
-                </div>
+              <SectionTitle>Validación de la práctica</SectionTitle>
+              <div className="grid gap-3 sm:grid-cols-3">
+                <ValField label="Código de verificación">
+                  <span
+                    className="font-mono text-lg font-bold tracking-wider"
+                    style={{ color: AZUL }}
+                  >
+                    {codigo}
+                  </span>
+                </ValField>
+                <ValField label="Fecha y hora">
+                  <span className="text-sm">{fechaHora}</span>
+                </ValField>
+                <ValField label="Instructor / Responsable">
+                  <span className="text-sm">{instructor}</span>
+                </ValField>
               </div>
-              <div className="flex-1">
-                <div
-                  style={{ borderTop: `1px solid #111` }}
-                  className="mt-8 pt-1 text-center text-[11px] uppercase tracking-wider text-neutral-600"
-                >
-                  Sello institucional
-                </div>
-              </div>
-            </div>
-          </section>
 
-          <footer className="mt-6 flex flex-wrap items-center justify-between gap-2 text-[10px] text-neutral-500">
-            <span>
-              Documento generado por el sistema PEPE · ISPM N°1
-            </span>
-            <span className="font-mono">{codigo}</span>
-          </footer>
+              <p className="mt-4 text-sm leading-relaxed text-neutral-700">
+                Este código certifica que{" "}
+                <strong>{data.estudiante || "el/la alumno/a"}</strong> realizó y
+                completó la práctica de Reanimación Cardiopulmonar (RCP)
+                registrada por el sistema PEPE, en el marco de la Tecnicatura
+                Superior en Automatización y Robótica del Instituto Superior
+                Politécnico Misiones N°1, el {fechaLarga}. Este documento
+                constituye un registro interno de la práctica realizada y no
+                reemplaza certificaciones oficiales de primeros auxilios o RCP.
+              </p>
+            </section>
+
+            <footer className="mt-6 flex flex-wrap items-center justify-between gap-2 text-xs text-neutral-500">
+              <span>
+                Documento generado por el sistema PEPE · ISPM N°1
+              </span>
+              <span className="font-mono">{codigo}</span>
+            </footer>
+          </div>
         </div>
       </div>
-    </div>
     );
   },
 );
@@ -392,8 +330,7 @@ export const InformeView = forwardRef<InformeViewHandle, InformeViewProps>(
 function SectionTitle({ children }: { children: React.ReactNode }) {
   return (
     <h3
-      className="mb-3 text-[11px] font-bold uppercase tracking-[0.14em]"
-      style={{ color: AZUL, borderBottom: `1px solid ${ROJO}`, paddingBottom: 4 }}
+      className="mb-3 border-b border-neutral-200 pb-1 text-sm font-semibold uppercase tracking-wider text-neutral-700"
     >
       {children}
     </h3>
